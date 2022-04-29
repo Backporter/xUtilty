@@ -1,21 +1,32 @@
 #include "../O/OrbisLog.h"
 #include "../O/OrbisFileSystem.h"
 #include "../O/OrbisMessageHandler.h"
+#include "../O/OrbisINIHandler.h"
 
+#include <stdint.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 
 namespace OrbisLog
 {
 	OrbisLog::OrbisLog()
-		:FD(0), LogPath(nullptr), UseNet(false)
+		:FD(-1), LogPath(nullptr), UseNet(false)
 	{
 		// 
 	}
 
 	OrbisLog::~OrbisLog()
 	{
-		// 
+		//
+		if (this->Vaild())
+			this->Close();
+
+		free((void*)LogPath);
+
+		this->FD = -1;
+		this->LogPath = nullptr;
+		this->UseNet = false;
 	}
 
 	bool OrbisLog::Open(const char* path)
@@ -27,16 +38,15 @@ namespace OrbisLog
 			return false;
 		}
 
+		// store path for ref in the future
+		LogPath = strdup(path);
 		return true;
 	}
 
 	bool OrbisLog::OpenRelitive(int ID, const char* path)
 	{
-		if (ID == OrbisFileSystem::NET)
-		{
-			this->UseNet = true;
-			return this->Connect(path);
-		}
+		// prevent possable issues
+		assert(ID != OrbisFileSystem::System);
 
 		// buffer to store the created path
 		char buff[260];
@@ -77,7 +87,7 @@ namespace OrbisLog
 			OrbisMessageHandler::KernelPrintOut("Failed to create network log, ret 0x%lx", this->FD);
 			return false;
 		}
-
+		
 		memset(&NetworkServer, 0, sizeof(NetworkServer));
 		NetworkServer.sin_len = sizeof(NetworkServer);
 		NetworkServer.sin_family = 2;
@@ -89,11 +99,20 @@ namespace OrbisLog
 			return false;
 		}
 
-		if ((ret = sceNetConnect(this->FD, (SceNetSockaddr *)&NetworkServer, sizeof(this->NetworkServer))) < 0)
+		if ((ret = sceNetConnect(this->FD, (const SceNetSockaddr *)&NetworkServer, sizeof(this->NetworkServer))) < 0)
 		{
 			OrbisMessageHandler::KernelPrintOut("sceNetConnect Failed 0x%lx", ret);
 			return false;
 		}
+
+		sceKernelFcntl(this->FD, F_SETFL, O_NONBLOCK);
+		
+		// this->opt = 1;
+		// if ((ret = sceNetSetsockopt(this->FD, 0xffff, 0x1200, (char*)&this->opt, 4)) != 0)
+		// {
+		// 	// ???
+		// 	OrbisMessageHandler::KernelPrintOut("sceNetSetsockopt failed 0x%lx", ret);
+		// }
 
 		if ((ret = sceNetSend(this->FD, "PS4 Connected!", 14, 128)) != 14)
 		{
@@ -101,14 +120,12 @@ namespace OrbisLog
 			return false;
 		}
 
+		LogPath = strdup(IP);
 		return true;
 	}
 
 	bool OrbisLog::Close()
 	{
-		if (this->UseNet)
-			return this->Disconnect();
-
 		if (sceKernelClose(FD) != 0)
 		{
 			OrbisMessageHandler::KernelPrintOut("%s %s %d failed to close log", __FILE__, __FUNCTION__, __LINE__);
@@ -116,6 +133,11 @@ namespace OrbisLog
 		}
 
 		return true;
+	}
+
+	bool OrbisLog::Vaild()
+	{
+		return (sceKernelLseek(this->FD, 0, SEEK_CUR) >= 0 && this->FD > 0);
 	}
 
 	bool OrbisLog::Disconnect()
@@ -131,6 +153,12 @@ namespace OrbisLog
 
 	bool OrbisLog::Write(const char* MessageFMT, ...)
 	{
+		if (!this->Vaild())
+		{
+			OrbisMessageHandler::KernelPrintOut("this->Vaild = false");
+			return false;
+		}
+
 		char endl = '\n';
 		char buf[8096];
 
@@ -140,8 +168,10 @@ namespace OrbisLog
 		va_end(args);
 		assert(len > 0);
 
-		if (this->UseNet)
-			return this->Send(buf);
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+		{
+			OrbisMessageHandler::KernelPrintOut("[%s] [%s]", __FUNCTION__, buf);
+		}
 
 		if ((ret = sceKernelWrite(FD, buf, len)) != len)
 		{ 
@@ -156,14 +186,52 @@ namespace OrbisLog
 			return false;
 		}
 
+		return true;
+	}
+
+	bool OrbisLog::WriteVA(uint32_t type, const char* MessageFMT, va_list list)
+	{
+		if (!this->Vaild())
+		{
+			OrbisMessageHandler::KernelPrintOut("this->Vaild = false");
+			return false;
+		}
+
+		char endl = '\n';
+		char buf[8096];
+
+		size_t len = vsprintf(buf, MessageFMT, list);
+		assert(len > 0);
+
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+		{
+			OrbisMessageHandler::KernelPrintOut("[%s] [%s]", __FUNCTION__, buf);
+		}
+
+		if ((ret = sceKernelWrite(FD, buf, len)) != len)
+		{
+			OrbisMessageHandler::KernelPrintOut("%s %s %d failed to write message to log(%s) ret: 0x%lx", __FILE__, __FUNCTION__, __LINE__, LogPath, ret);
+			return false;
+		}
+
+		// ugly, we need to fix this...
+		if ((ret = sceKernelWrite(FD, &endl, 1)) != 1)
+		{
+			OrbisMessageHandler::KernelPrintOut("%s %s %d failed to write endl to log(%s) ret: 0x%lx", __FILE__, __FUNCTION__, __LINE__, LogPath, ret);
+			return false;
+		}
 
 		return true;
 	}
 
+
 	bool OrbisLog::Send(const char* MessageFMT, ...)
 	{
-		if (this->FD < 0)
+		if (!this->Vaild())
+		{
+			OrbisMessageHandler::KernelPrintOut("this->Vaild = false");
 			return false;
+		}
 
 		char endl = '\n';
 		char buf[8096];
@@ -173,6 +241,9 @@ namespace OrbisLog
 		size_t len = vsprintf(buf, MessageFMT, args);
 		va_end(args);
 		assert(len > 0);
+
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+			OrbisMessageHandler::KernelPrintOut("[%s] [%s]", __FUNCTION__, buf);
 
 		if ((ret = sceNetSend(this->FD, buf, len, 128)) != len)
 		{
@@ -187,7 +258,12 @@ namespace OrbisLog
 			return false;
 		}
 
-
 		return true;
 	}
+
+}
+
+void PrintToLog(char* rdi)
+{
+	OrbisLog::OrbisLog::GetSingleton()->Write(rdi);
 }

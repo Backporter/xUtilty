@@ -348,3 +348,11 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+source/Third-Party/herumi/xbayk/6.00/xbyak_util.h
+source/Third-Party/herumi/xbayk/6.00/xbyak_mnemonic.h
+source/Third-Party/herumi/xbayk/6.00/xbyak_bin2hex.h
+source/Third-Party/herumi/xbayk/6.00/xbyak.h
+source/Third-Party/brofield/1.0/SimpleIni.h
+source/Third-Party/brofield/1.0/ConvertUTF.h
+source/Third-Party/brofield/1.0/ConvertUTF.c
+source/Third-Party/benhoyt/1.0/INIReader.h

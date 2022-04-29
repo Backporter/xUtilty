@@ -60,34 +60,35 @@ namespace OrbisDialogueManger
 		if ((ret = sceSysmoduleLoadModule(0x00a4)) != 0)
 		{
 			OrbisMessageHandler::Notify("sceSysmoduleLoadModule(0x00a4) failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceCommonDialogInitialize()) < 0 && ret != 0x80B80002)
 		{
 			OrbisMessageHandler::Notify("sceCommonDialogInitialize() failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceMsgDialogInitialize()) < 0 && ret != 0x80B80004)
 		{
 			OrbisMessageHandler::Notify("sceMsgDialogInitialize() failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceMsgDialogOpen(&MsgDialogParam)) < 0)
 		{
 			OrbisMessageHandler::Notify("sceMsgDialogOpen failed with 0x%lx", ret);
 			sceMsgDialogClose();
-			return 0;
+			return ret;
 		}
 
 		while (sceMsgDialogUpdateStatus() != 3);
 		sceMsgDialogClose();
 
 		sceMsgDialogGetResult(&MsgDialogResult);
-
 		sceMsgDialogTerminate();
+		sceKernelSleep(1);
+
 		return 0;
 	}
 
@@ -111,36 +112,40 @@ namespace OrbisDialogueManger
 		if ((ret = sceSysmoduleLoadModule(0x00ac)) != 0)
 		{
 			OrbisMessageHandler::Notify("sceSysmoduleLoadModule(0x00ac) failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceCommonDialogInitialize()) < 0 && ret != 0x80B80002)
 		{
 			OrbisMessageHandler::Notify("sceCommonDialogInitialize() failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceErrorDialogInitialize()) < 0 && ret != 0x80B80004)
 		{
 			OrbisMessageHandler::Notify("sceErrorDialogInitialize() failed with 0x%lx", ret);
-			return 0;
+			return ret;
 		}
 
 		if ((ret = sceErrorDialogOpen(&ErrorDialogParam)) < 0)
 		{
 			OrbisMessageHandler::Notify("sceErrorDialogOpen failed with 0x%lx", ret);
 			sceMsgDialogClose();
-			return 0;
+			return ret;
 		}
 
 		while (sceErrorDialogUpdateStatus() != 3);
 		sceErrorDialogClose();
 		sceErrorDialogTerminate();
+		sceKernelSleep(1);
+
 		return 0;
 	}
 
-	void OrbisDialogueManger::InitializeImeDialog(wchar_t* title, wchar_t* exampletext, float x, float y, int type, int enterlabeltype, int option, int max_length)
+	void OrbisDialogueManger::InitializeImeDialog(const wchar_t* title, const wchar_t* exampletext, float x, float y, int type, int enterlabeltype, int option, int max_length)
 	{
+		memset(&this->ImeDialogParam, 0, sizeof(this->ImeDialogParam));
+
 		sceImeDialogParamInit(&this->ImeDialogParam);
 #if defined(__ORBIS__)
 		sceUserServiceGetInitialUser(&this->ImeDialogParam.userId);
@@ -186,7 +191,6 @@ namespace OrbisDialogueManger
 	int32_t OrbisDialogueManger::ShowImeDialog(char* buf)
 	{
 		int ret = 0;
-		// char buf[2048] { 0 };
 
 		if ((ret = sceSysmoduleLoadModule(0x0096)) != 0)
 		{
@@ -197,6 +201,7 @@ namespace OrbisDialogueManger
 		if ((ret = sceCommonDialogInitialize()) < 0 && ret != 0x80B80002)
 		{
 			OrbisMessageHandler::Notify("sceCommonDialogInitialize() failed with 0x%lx", ret);
+			sceSysmoduleUnloadModule(0x0096);
 			return ret;
 		}
 
@@ -209,6 +214,7 @@ namespace OrbisDialogueManger
 		if ((ret = sceImeDialogInit(&this->ImeDialogParam, ptr)) < 0 && ret != 0x80BC0001)
 		{
 			OrbisMessageHandler::Notify("sceImeDialogInit() failed with 0x%lx", ret);
+			sceSysmoduleUnloadModule(0x0096);
 			return ret;
 		}
 
@@ -217,9 +223,11 @@ namespace OrbisDialogueManger
 		if ((ret = sceImeDialogGetResult(&ImeDialogResult)) != 0)
 		{
 			OrbisMessageHandler::Notify("sceImeDialogGetResult(&ImeDialogResult) failed with 0x%lx", ret);
+			sceSysmoduleUnloadModule(0x0096);
 			return ret;
 		}
 
+		if (ImeDialogResult.endstatus != 0) { return -1; }
 		wcstombs(buf, this->ImeDialogParam.inputTextBuffer, 2048);
 		
 		free(this->ImeDialogParam.inputTextBuffer);
@@ -228,9 +236,12 @@ namespace OrbisDialogueManger
 		if ((ret = sceImeDialogTerm()) != 0)
 		{
 			OrbisMessageHandler::Notify("sceImeDialogTerm() failed with 0x%lx", ret);
+			sceSysmoduleUnloadModule(0x0096);
 			return ret;
 		}
 
+		sceKernelSleep(1);
+		sceSysmoduleUnloadModule(0x0096);
 		return 0;
 	}
 }

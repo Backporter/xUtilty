@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ORBIS">
+      <Configuration>Debug</Configuration>
+      <Platform>ORBIS</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ORBIS">
+      <Configuration>Release</Configuration>
+      <Platform>ORBIS</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{72C2AA1E-9ED3-48EA-99FA-DC9241308175}</ProjectGuid>
+    <ProjectName>_OrbisUtil</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ORBIS'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ORBIS'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(DebuggerFlavor)'=='ORBISDebugger'" Label="OverrideDebuggerDefaults">
+    <!--LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand-->
+    <!--LocalDebuggerCommandArguments></LocalDebuggerCommandArguments-->
+    <!--LocalDebuggerTarget></LocalDebuggerTarget-->
+    <!--LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory-->
+    <!--LocalRunCommandLine></LocalRunCommandLine-->
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\OrbisWavePsslc.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\SCU.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ORBIS'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ORBIS'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ORBIS'">
+    <OutDir>$(Platform)_$(Configuration)\</OutDir>
+    <TargetName>libOrbisUtil</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ORBIS'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <DisableSpecificWarnings>unknown-pragmas;unused-private-field;c++1z-extensions</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ORBIS'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\M\Mira.cpp" />
+    <ClCompile Include="source\O\OrbisDialogueManger.cpp" />
+    <ClCompile Include="source\O\OrbisFIleHandler.cpp" />
+    <ClCompile Include="source\O\OrbisFileSystem.cpp" />
+    <ClCompile Include="source\O\OrbisINIHandler.cpp" />
+    <ClCompile Include="source\O\OrbisLog.cpp" />
+    <ClCompile Include="source\O\OrbisMemoryHandler.cpp" />
+    <ClCompile Include="source\O\OrbisMutex.cpp" />
+    <ClCompile Include="source\O\OrbisOffsertManger.cpp" />
+    <ClCompile Include="source\O\OrbisSFOHandler.cpp" />
+    <ClCompile Include="source\O\OrbisCryptoHandler.cpp" />
+    <ClCompile Include="source\T\Trampoline.cpp" />
+    <ClCompile Include="source\O\OrbisMessageHandler.cpp" />
+    <ClCompile Include="source\O\OrbisRelocationManager.cpp" />
+    <ClCompile Include="source\O\OrbisSystemWrapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\E\EMOJI.h" />
+    <ClInclude Include="source\O\OrbisCryptoHandler.h" />
+    <ClInclude Include="source\O\OrbisDialogueManger.h" />
+    <ClInclude Include="source\O\OrbisFIleHandler.h" />
+    <ClInclude Include="source\O\OrbisFileSystem.h" />
+    <ClInclude Include="source\O\OrbisINIHandler.h" />
+    <ClInclude Include="source\O\OrbisLog.h" />
+    <ClInclude Include="source\O\OrbisMemoryHandler.h" />
+    <ClInclude Include="source\O\OrbisMutex.h" />
+    <ClInclude Include="source\O\OrbisOffsertManger.h" />
+    <ClInclude Include="source\O\OrbisSFOHandler.h" />
+    <ClInclude Include="source\PS4.h" />
+    <ClInclude Include="source\R\Relocation.h" />
+    <ClInclude Include="source\Third-Party\benhoyt\1.0\INIReader.h" />
+    <ClInclude Include="source\Third-Party\benhoyt\INIReader.h" />
+    <ClInclude Include="source\Third-Party\herumi\xbyak.h" />
+    <ClInclude Include="source\Third-Party\herumi\xbyak_bin2hex.h" />
+    <ClInclude Include="source\Third-Party\herumi\xbyak_mnemonic.h" />
+    <ClInclude Include="source\Third-Party\herumi\xbyak_util.h" />
+    <ClInclude Include="source\Third-Party\INIReader.h" />
+    <ClInclude Include="source\Third-Party\xbyak.h" />
+    <ClInclude Include="source\Third-Party\xbyak_bin2hex.h" />
+    <ClInclude Include="source\Third-Party\xbyak_mnemonic.h" />
+    <ClInclude Include="source\Third-Party\xbyak_util.h" />
+    <ClInclude Include="source\T\Trampoline.h" />
+    <ClInclude Include="source\M\Macro.h" />
+    <ClInclude Include="source\M\Mira.h" />
+    <ClInclude Include="source\O\OrbisMessageHandler.h" />
+    <ClInclude Include="source\O\OrbisRelocationManager.h" />
+    <ClInclude Include="source\O\OrbisSystemWrapper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="note.txt" />
+  </ItemGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\OrbisWavePsslc.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\SCU.targets" />
+  </ImportGroup>
+</Project>

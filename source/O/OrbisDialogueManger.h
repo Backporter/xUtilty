@@ -12,6 +12,7 @@
 #include <orbis/MsgDialog.h>
 #include <orbis/CommonDialog.h>
 #include <orbis/Sysmodule.h>
+#include <orbis/libkernel.h>
 typedef OrbisMsgDialogParam			   SceMsgDialogParam;
 typedef OrbisMsgDialogUserMessageParam SceMsgDialogUserMessageParam;
 typedef OrbisMsgDialogButtonsParam	   SceMsgDialogButtonsParam;
@@ -64,6 +65,7 @@ static inline void sceMsgDialogParamInitialize(SceMsgDialogParam *param)
 #include <message_dialog.h>
 #include <common_dialog.h>
 #include <libsysmodule.h>
+#include <kernel.h>
 #endif
 
 namespace OrbisDialogueManger
@@ -114,7 +116,7 @@ namespace OrbisDialogueManger
 
 		virtual int32_t ShowErrorDialog();
 		
-		virtual void InitializeImeDialog(wchar_t* title = L"", wchar_t* exampletext = L"", float x = 959, float y = 959, int type = 0, int enterlabeltype = 0, int option = 0x2 | 0x8 | 0x10, int max_length = 2048);
+		virtual void InitializeImeDialog(const wchar_t* title = L"", const wchar_t* exampletext = L"", float x = 959, float y = 959, int type = 0, int enterlabeltype = 0, int option = 0x2 | 0x8 | 0x10, int max_length = 2048);
 
 		// retuns this->ImeParamExtended so you can set the params
 		virtual SceImeParamExtended* GetImeDialogExtendedSettings();

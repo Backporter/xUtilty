@@ -9,11 +9,10 @@ set outputstatic=OrbisUtil.a
 @mkdir %intdir%
 
 for /r %%f in (*.cpp) do (
-    rem -Wc++1z-extensions
-    clang++.exe --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -D__OPENORBIS__=1 -o0 -I"%OO_PS4_TOOLCHAIN%\\include" -I"%OO_PS4_TOOLCHAIN%\\include\\c++\\v1" -c -o "%intdir%\%%~nf.o" "%%f"
+    clang++.exe --target=x86_64-pc-freebsd12-elf -fPIC -std=c++17 -funwind-tables -D__OPENORBIS__=1 -o0 -I"%OO_PS4_TOOLCHAIN%\\include" -I"%OO_PS4_TOOLCHAIN%\\include\\c++\\v1" -c -o "%intdir%\%%~nf.o" "%%f"
 )
 
-rem cls
+cls
 
 SETLOCAL EnableDelayedExpansion
 
