@@ -1,1 +1,0 @@
-This is a libary that holds functions and tools specific to the Orbis Platform

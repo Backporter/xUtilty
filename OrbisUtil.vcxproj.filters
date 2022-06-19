@@ -1,55 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="source\M\Mira.cpp" />
-    <ClCompile Include="source\O\OrbisCryptoHandler.cpp" />
-    <ClCompile Include="source\O\OrbisDialogueManger.cpp" />
-    <ClCompile Include="source\O\OrbisFIleHandler.cpp" />
-    <ClCompile Include="source\O\OrbisFileSystem.cpp" />
-    <ClCompile Include="source\O\OrbisINIHandler.cpp" />
-    <ClCompile Include="source\O\OrbisLog.cpp" />
-    <ClCompile Include="source\O\OrbisMemoryHandler.cpp" />
-    <ClCompile Include="source\O\OrbisMessageHandler.cpp" />
-    <ClCompile Include="source\O\OrbisMutex.cpp" />
-    <ClCompile Include="source\O\OrbisOffsertManger.cpp" />
-    <ClCompile Include="source\O\OrbisRelocationManager.cpp" />
-    <ClCompile Include="source\O\OrbisSFOHandler.cpp" />
-    <ClCompile Include="source\O\OrbisSystemWrapper.cpp" />
-    <ClCompile Include="source\T\Trampoline.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="source\Third-Party\INIReader.h" />
-    <ClInclude Include="source\Third-Party\xbyak.h" />
-    <ClInclude Include="source\Third-Party\xbyak_bin2hex.h" />
-    <ClInclude Include="source\Third-Party\xbyak_mnemonic.h" />
-    <ClInclude Include="source\Third-Party\xbyak_util.h" />
-    <ClInclude Include="source\Third-Party\herumi\xbyak.h" />
-    <ClInclude Include="source\Third-Party\herumi\xbyak_bin2hex.h" />
-    <ClInclude Include="source\Third-Party\herumi\xbyak_mnemonic.h" />
-    <ClInclude Include="source\Third-Party\herumi\xbyak_util.h" />
-    <ClInclude Include="source\Third-Party\benhoyt\INIReader.h" />
-    <ClInclude Include="source\E\EMOJI.h" />
-    <ClInclude Include="source\M\Macro.h" />
-    <ClInclude Include="source\M\Mira.h" />
-    <ClInclude Include="source\O\OrbisCryptoHandler.h" />
-    <ClInclude Include="source\O\OrbisDialogueManger.h" />
-    <ClInclude Include="source\O\OrbisFIleHandler.h" />
-    <ClInclude Include="source\O\OrbisFileSystem.h" />
-    <ClInclude Include="source\O\OrbisINIHandler.h" />
-    <ClInclude Include="source\O\OrbisLog.h" />
-    <ClInclude Include="source\O\OrbisMemoryHandler.h" />
-    <ClInclude Include="source\O\OrbisMessageHandler.h" />
-    <ClInclude Include="source\O\OrbisMutex.h" />
-    <ClInclude Include="source\O\OrbisOffsertManger.h" />
-    <ClInclude Include="source\O\OrbisRelocationManager.h" />
-    <ClInclude Include="source\O\OrbisSFOHandler.h" />
-    <ClInclude Include="source\O\OrbisSystemWrapper.h" />
-    <ClInclude Include="source\R\Relocation.h" />
-    <ClInclude Include="source\T\Trampoline.h" />
-    <ClInclude Include="source\Third-Party\benhoyt\1.0\INIReader.h" />
-    <ClInclude Include="source\PS4.h" />
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="note.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\CryptoHandler.h" />
+    <ClInclude Include="include\EMOJI.h" />
+    <ClInclude Include="include\FIleHandler.h" />
+    <ClInclude Include="include\FileSystem.h" />
+    <ClInclude Include="include\INIHandler.h" />
+    <ClInclude Include="include\Logger.h" />
+    <ClInclude Include="include\Macro.h" />
+    <ClInclude Include="include\MemoryHandler.h" />
+    <ClInclude Include="include\MessageHandler.h" />
+    <ClInclude Include="include\Mira.h" />
+    <ClInclude Include="include\Mutex.h" />
+    <ClInclude Include="include\OrbisDialogueManger.h" />
+    <ClInclude Include="include\OrbisOffsertManger.h" />
+    <ClInclude Include="include\OrbisSFOHandler.h" />
+    <ClInclude Include="include\Relocation.h" />
+    <ClInclude Include="include\RelocationManager.h" />
+    <ClInclude Include="include\SystemWrapper.h" />
+    <ClInclude Include="include\Trampoline.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\CryptoHandler.cpp" />
+    <ClCompile Include="source\FIleHandler.cpp" />
+    <ClCompile Include="source\FileSystem.cpp" />
+    <ClCompile Include="source\INIHandler.cpp" />
+    <ClCompile Include="source\Logger.cpp" />
+    <ClCompile Include="source\MemoryHandler.cpp" />
+    <ClCompile Include="source\MessageHandler.cpp" />
+    <ClCompile Include="source\Mira.cpp" />
+    <ClCompile Include="source\Mutex.cpp" />
+    <ClCompile Include="source\OrbisDialogueManger.cpp" />
+    <ClCompile Include="source\OrbisOffsertManger.cpp" />
+    <ClCompile Include="source\OrbisSFOHandler.cpp" />
+    <ClCompile Include="source\RelocationManager.cpp" />
+    <ClCompile Include="source\SystemWrapper.cpp" />
+    <ClCompile Include="source\Trampoline.cpp" />
   </ItemGroup>
 </Project>
