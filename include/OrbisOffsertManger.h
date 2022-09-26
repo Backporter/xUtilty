@@ -32,7 +32,8 @@ namespace OrbisOffsetManger
 	class OffsetManger
 	{
 	public:
-		OffsetManger() 
+		OffsetManger() :
+			OffsetFIle(NULL), IsSandboxPath(false), IsParsed(false), FD(NULL), RET(NULL), Header{ 0 }
 		{
 			Initialize();
 		}
@@ -76,9 +77,10 @@ namespace OrbisOffsetManger
 			return &OffsetManger;
 		}
 
-	private:
+	public:
 		const char* OffsetFIle;
 		bool		IsSandboxPath;
+		bool		IsParsed;
 		int			FD;
 		int			RET;
 

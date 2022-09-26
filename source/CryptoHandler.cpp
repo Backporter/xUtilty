@@ -52,14 +52,25 @@ const uint32_t CRC32Table[] =
 };
 
 
-void CryptoHandler::GetCRC32(uint32_t* Out, const char* Source)
+void CryptoHandler::GetCRC32(uint32_t* a_out, const char* a_source)
 {
 	uint32_t Hash = 0;
 
-	for (size_t i = 0; i < strlen(Source); i++) 
+	for (size_t i = 0; i < strlen(a_source); i++)
 	{
-		Hash = (Hash >> 8) ^ CRC32Table[Source[(uint32_t)i] ^ (Hash & 0xFF)];
+		Hash = (Hash >> 8) ^ CRC32Table[a_source[(uint32_t)i] ^ (Hash & 0xFF)];
 	}
 
-	*Out = Hash;
+	*a_out = Hash;
+}
+
+void CryptoHandler::GetCRC32_2(uint32_t* a_out, const char* a_source, uint32_t a_start)
+{
+	uint32_t Hash = ~a_start;
+	for (auto i = 0; i < strlen(a_source); i++)
+	{
+		Hash = (Hash >> 8) ^ CRC32Table[a_source[(uint32_t)i] ^ (Hash & 0xFF)];
+	}
+
+	*a_out = Hash;
 }

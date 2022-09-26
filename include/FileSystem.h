@@ -130,13 +130,13 @@ namespace OrbisFileSystem
 	// returns a vector list containing DirectoryEntry structures, these will contain all found *DIRECTORY* entries
 	// WARNING: for any non jail'ed paths you need to specify PathType as USB(2) OR SYSTEM(7) - this will unail the prcoess, grab the entries, rejail and return the list
 	// EX, auto vec = GetDirectoryEntries("/app0/data/example/");
-	std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, int PathType);
+	std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, int PathType, bool combine = false);
 
 	// returns a vector list containing DirectoryEntry structures, these will contain all found *FILE* entries
 	// WARNING: for any non jail'ed paths you need to specify PathType as USB(2) OR SYSTEM(7) - this will unail the prcoess, grab the entries, rejail and return the list
 	// EX, auto vec = GetDirectoryEntries("/app0/data/example/", ".wav", true, NULL);
 	// EX, auto vec = GetDirectoryEntries("/app0/data/example/", nullptr, false, NULL);
-	std::vector<DirectoryEntry> GetDirectoryFileEntries(const char* path, const char* extension, bool UseFilter, int PathType);
+	std::vector<DirectoryEntry> GetDirectoryFileEntries(const char* path, const char* extension, bool UseFilter, int PathType, bool combine = false);
 
 	bool PathExists(int reltype, const char* relpath, bool IsDirectory);
 
@@ -160,4 +160,8 @@ namespace OrbisFileSystem
 
 	// void Write(char* Path, int PathType, void* buf, size_t bufflen);
 	void Copy2(char* src, char* dst, int reltype);
+
+
+	// 
+	const char* GetFilenameFromPath(const char* path);
 }

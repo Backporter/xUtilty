@@ -1,5 +1,6 @@
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 #include <stdint.h>
+#include "../include/INIHandler.h"
 #include "../include/MessageHandler.h"
 #include "../include/SystemWrapper.h"
 #include "../include/Mira.h"
@@ -47,6 +48,39 @@ namespace OrbisMiraHandler
 		auto s_ModuleCount = s_ModuleList->ModuleCount;
 
 		return std::vector<ProcessModuleList::Module>(s_Modules, s_Modules + s_ModuleCount);
+	}
+
+	void InitializeModueList()
+	{
+		int ret = 0;
+		if (!OrbisSystemWrapper::ioctl)
+		{
+			OrbisSystemWrapper::libkernelhandle = sceKernelLoadStartModule("libkernel.sprx", 0, 0, 0, 0, 0);
+
+			if (OrbisSystemWrapper::libkernelhandle > 0)
+			{
+				if ((ret = sceKernelDlsym(OrbisSystemWrapper::libkernelhandle, "ioctl", (void**)&OrbisSystemWrapper::ioctl)) != 0)
+				{
+					OrbisSystemWrapper::ioctl = nullptr;
+					sceKernelStopUnloadModule(OrbisSystemWrapper::libkernelhandle, 0, 0, 0, 0, 0);
+				}
+			}
+			else
+			{
+				sceKernelStopUnloadModule(OrbisSystemWrapper::libkernelhandle, 0, 0, 0, 0, 0);
+			}
+		}
+
+		if (g_processmodulelist.size() <= 0)
+		{
+			int fd = open("/dev/mira", 0, 0);
+			if (fd < 0)
+			{
+				return;
+			}
+			g_processmodulelist = ProcessModules(fd);
+			close(fd);
+		}
 	}
 
 	bool ReadMemory(void* p_Address, void* p_OutData, uint32_t p_Size)
@@ -202,6 +236,14 @@ namespace OrbisMiraHandler
 			close(fd);
 		}
 
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+		{
+			for (auto l_Module : g_processmodulelist)
+			{
+				MessageHandler::KernelPrintOut("va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
+			}
+		}
+
 		for (auto l_Module : g_processmodulelist)
 		{
 			if (strcasecmp(l_Module.Path, path) == 0)
@@ -229,5 +271,6 @@ namespace OrbisMiraHandler
 		close(fd);
 		return true;
 	}
+
 }
 #endif

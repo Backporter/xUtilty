@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <cstdlib>
+#include "SystemWrapper.h"
+#include "SafeTypes.h"
 
 #if defined(__OPENORBIS__)
 #include <orbis/UserService.h>
@@ -102,11 +104,41 @@ namespace OrbisDialogueManger
 		OrbisDialogueManger();
 		virtual ~OrbisDialogueManger();
 
+		inline wchar_t_t* CreateTitle(const char* a_title)
+		{
+			if (!a_title)
+				return nullptr;
+
+			size_t ret = 0;
+			static wchar_t_t buffer[512];
+			memset(buffer, 0, sizeof(buffer));
+
+			if ((ret = OrbisSystemWrapper::mbstowcs(buffer, a_title, strlen(a_title)) == static_cast<size_t>(-1)))
+				return nullptr;
+			else
+				return buffer;
+		}
+
+		inline wchar_t_t* CreateExample(const char* a_ex)
+		{
+			if (!a_ex)
+				return nullptr;
+
+			size_t ret = 0;
+			static wchar_t_t buffer[512];
+			memset(buffer, 0, sizeof(buffer));
+
+			if ((ret = OrbisSystemWrapper::mbstowcs(buffer, a_ex, strlen(a_ex)) == static_cast<size_t>(-1)))
+				return nullptr;
+			else
+				return buffer;
+		}
+
 		// Set params for use in MsgDialog
-		virtual void InitializeMsgDialog(char* message, int mode = 1, int ButtonType = 0);
+		virtual void InitializeMsgDialog(const char* message, int mode = 1, int ButtonType = 0);
 
 		// two button mode with 
-		virtual void InitializeMsgDialog2(char* message, char* btn1, char* btn2, int mode = 1, int ButtonType = 9);
+		virtual void InitializeMsgDialog2(const char* message, char* btn1, char* btn2, int mode = 1, int ButtonType = 9);
 
 		// returns 0 if sucessfully used
 		virtual int32_t ShowMsgDialog();
@@ -118,7 +150,7 @@ namespace OrbisDialogueManger
 
 		virtual int32_t ShowErrorDialog();
 		
-		virtual void InitializeImeDialog(const wchar_t* title = L"", const wchar_t* exampletext = L"", float x = 959, float y = 959, int type = 0, int enterlabeltype = 0, int option = 0x2 | 0x8 | 0x10, int max_length = 2048);
+		virtual void InitializeImeDialog(const char* title = "", const char* exampletext = "", float x = 959, float y = 959, int type = 0, int enterlabeltype = 0, int option = 0x2 | 0x8 | 0x10, int max_length = 2048);
 
 		// retuns this->ImeParamExtended so you can set the params
 		virtual SceImeParamExtended* GetImeDialogExtendedSettings();
@@ -150,7 +182,7 @@ namespace OrbisDialogueManger
 		SceImeDialogResult			 ImeDialogResult;
 		SceImeParamExtended			 ImeParamExtended;
 		bool						 UseImeExtendedSettings;
-		wchar_t*					 Buffer;
+		wchar_t_t*					 Buffer;
 	};
 }
 #endif

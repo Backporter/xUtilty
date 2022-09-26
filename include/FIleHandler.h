@@ -1,4 +1,5 @@
 #pragma once
+#include "SafeTypes.h"
 
 #if defined(__ORBIS__)
 #include <kernel.h>
@@ -21,8 +22,9 @@ namespace FIleHandler
 	{
 	public:
 		// File path, Full if abs is true, /app0/XXX if abs is false, Type indicates if the Readstring function should read in a wide string form or not, only effects Readstring, everything else is un-effected
-		FIleHandler(char* relpath, int Type, bool abs);
-		FIleHandler(char* relpath, int Type, bool abs, bool Create);
+		FIleHandler(char* relpath, int Type, int flags);
+		FIleHandler(char* relpath, int Type, int flags, bool abs);
+		
 		~FIleHandler();
 		
 		// returns if the raw file descriptor is vaild
@@ -51,14 +53,18 @@ namespace FIleHandler
 
 		// WINDOWS and UNIX new line ID's are slightly differnt, \r\n on windows and \n on UNIX, this needs to be accounted for 
 		// returns read string length(not including terminator), sets dst to a properly termanated string
-		uint64_t ReadStringW(wchar_t* dst, int(*_fn)(int) = NULL, uint64_t len = 512 * 2, char endl = '\n', char endl2 = '\r');
+		uint64_t ReadStringW(wchar_t_t* dst, int(*_fn)(int) = NULL, uint64_t len = 512 * 2, char endl = '\n', char endl2 = '\r');
 
 
 		// WINDOWS and UNIX new line ID's are slightly differnt, \r\n on windows and \n on UNIX, this needs to be accounted for 
 		// returns written string length(not including terminator), and writes a string to the file stream
 		// uint64_t WriteString(char* src, uint64_t len , char endl = '\0');
 
+
+		struct stat* GetFileStats();
+
 	private:
+		bool		IsCopy;
 		char*	    FilePath;
 
 		int		    FileDescriptor;

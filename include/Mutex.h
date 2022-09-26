@@ -1,4 +1,5 @@
 #pragma once
+#include "SystemWrapper.h"
 
 #if defined(__ORBIS__)
 #include <mutex>
@@ -31,7 +32,7 @@ namespace OrbisMutex
 		int			RET;
 		const char* LASTFN;
 
-		pthread_mutex_t		mutex;
+		pthread_mutex_t	    mutex;
 		pthread_mutexattr_t mutexattr;
 	};
 

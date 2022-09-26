@@ -78,8 +78,9 @@ namespace Trampoline
 		Trampoline();
 		~Trampoline();
 
-		bool SystemAllocate(size_t TrampolineSize = 1024 * 64);
+		bool SystemAllocate(size_t TrampolineSize = 1024 * 64, size_t alignment = 1024 * 64);
 		void SystemDeallocate();
+		void SystemRestore(off_t src, size_t src_len = 1024 * 64);
 
 		void* StartTake();
 		void  RestoreAllocated(const void* allocated);
@@ -143,6 +144,12 @@ namespace Trampoline
 		}
 
 		template <size_t N>
+		void WriteCall(uintptr_t source, Xbyak::CodeGenerator& xbayk)
+		{
+			return WriteCall<N>(source, uintptr_t(xbayk.getCode()));
+		}
+
+		template <size_t N>
 		void WriteJMP(uintptr_t source, uintptr_t dest)
 		{
 			if constexpr (N == 5)
@@ -192,6 +199,11 @@ namespace Trampoline
 			}
 		}
 
+		template <size_t N>
+		void WriteJMP(uintptr_t source, Xbyak::CodeGenerator& xbayk)
+		{
+			return WriteJMP<N>(source, uintptr_t(xbayk.getCode()));
+		}
 	private:
 		void*		SystemAllocatedMemory;
 		size_t		SystemAllocatedLength;

@@ -27,12 +27,12 @@ namespace OrbisFileSystem
 {
 	// https://github.com/KuromeSan/ps5-lib-il2cpp/blob/382f6daac6ea2da96d9e26ea44926df214b76d35/libil2cpp/os/PS5/Directory.cpp
 	
-	std::vector<DirectoryEntry> GetDirectoryFileEntries(const char* path, const char* extension, bool UseFilter, int PathType)
+	std::vector<DirectoryEntry> GetDirectoryFileEntries(const char* path, const char* extension, bool UseFilter, int PathType, bool combine)
 	{
-		static std::vector<DirectoryEntry> DirectoryEntries;
+		std::vector<DirectoryEntry> DirectoryEntries;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		bool SwapCreed = (PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
+		bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
 
 		if (SwapCreed)
 			OrbisSystemWrapper::Jailbreak();
@@ -77,17 +77,23 @@ namespace OrbisFileSystem
 			if (UseFilter)
 			{
 				// compare the extension and add it
-				std::string filename(entry->d_name);
+				std::string filename;
+				if (combine)
+					filename += (char*)path;
+
+				filename += entry->d_name;
+
+
 				std::string ext = filename.substr(filename.size() - 4, 4);
 
 				if (strcasecmp(ext.c_str(), extension) == 0)
 				{
-					DirectoryEntries.push_back(DirectoryEntry(entry->d_name, entry->d_type, entry->d_fileno));
+					DirectoryEntries.push_back(DirectoryEntry(combine ? std::string(path) + entry->d_name : entry->d_name, entry->d_type, entry->d_fileno));
 				}
 			}
 			else
 			{
-				DirectoryEntries.push_back(DirectoryEntry(entry->d_name, entry->d_type, entry->d_fileno));
+				DirectoryEntries.push_back(DirectoryEntry(combine ? std::string(path) + entry->d_name : entry->d_name, entry->d_type, entry->d_fileno));
 			}
 		}
 
@@ -100,12 +106,12 @@ namespace OrbisFileSystem
 		return DirectoryEntries;
 	}
 
-	std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, int PathType)
+	std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, int PathType, bool combine)
 	{
-		static std::vector<DirectoryEntry> DirectoryEntries;
+		std::vector<DirectoryEntry> DirectoryEntries;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		bool SwapCreed = (PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
+		bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
 
 		if (SwapCreed)
 			OrbisSystemWrapper::Jailbreak();
@@ -146,7 +152,7 @@ namespace OrbisFileSystem
 				continue;
 
 			if (entry->d_type == DT_DIR)
-				DirectoryEntries.push_back(DirectoryEntry(entry->d_name, DT_DIR, entry->d_fileno));
+				DirectoryEntries.push_back(DirectoryEntry(combine ? std::string(path) + entry->d_name: entry->d_name, DT_DIR, entry->d_fileno));
 			
 		}
 
@@ -505,7 +511,12 @@ namespace OrbisFileSystem
 		char tempbuffer[260];
 		va_list args;
 		va_start(args, Relpath);
-		vsprintf(tempbuffer, Relpath, args);
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		if (OrbisSystemWrapper::vsprintf)
+			OrbisSystemWrapper::vsprintf(tempbuffer, Relpath, args);
+		else
+#endif
+			vsprintf(tempbuffer, Relpath, args);
 		va_end(args);
 
 		switch (reltype)
@@ -632,9 +643,17 @@ namespace OrbisFileSystem
 
 	size_t CreateString(char* buffer, const char* MessageFMT, ...)
 	{
+		size_t length;
 		va_list args;
 		va_start(args, MessageFMT);
-		size_t length = vsprintf(buffer, MessageFMT, args);
+
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		if (OrbisSystemWrapper::vsprintf)
+			length = OrbisSystemWrapper::vsprintf(buffer, MessageFMT, args);
+		else
+#endif
+			length = vsprintf(buffer, MessageFMT, args);
+
 		va_end(args);
 		return length;
 	}
@@ -837,8 +856,8 @@ namespace OrbisFileSystem
 
 		if (reltype == Full)
 		{
-			fd = open(path, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
 			OrbisFileSystem::CreateDirectoryPath((char*)path);
+			fd = open(path, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
 		}
 		else
 		{
@@ -859,5 +878,19 @@ namespace OrbisFileSystem
 		close(fd);
 
 		Unmount(reltype);
+	}
+
+	const char* GetFilenameFromPath(const char* path)
+	{
+		if (!path)
+			return NULL;
+
+		const char* newstr = strrchr(path, '/');
+		if (!newstr)
+			return NULL;
+
+		newstr++;
+
+		return newstr;
 	}
 }

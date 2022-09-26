@@ -6,13 +6,16 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
 // NAX ID LENGTH =  0x28/40
 template <typename T>
 class Relocation
 {
 public:
-	Relocation() { }
+	Relocation() 
+	{ 
+	}
 
 	Relocation(uintptr_t offset)
 	{
@@ -22,20 +25,27 @@ public:
 	// 0x28/40
 	Relocation(const char* ID, uintptr_t defaultvalue)
 	{
-		auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(ID);
-		this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
+		this->Offset = reinterpret_cast <void*>(defaultvalue + RelocationManager::RelocationManager::ApplicationBaseAddress);
+		// auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(ID);
+		// this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
 	}
 
 	Relocation(const char* a_id, const char* a_id2, uintptr_t defaultvalue)
 	{
-		auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id);
-		
-		if (dboffset == NULL)
-			dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id2);
+		this->Offset = reinterpret_cast <void*>(defaultvalue + RelocationManager::RelocationManager::ApplicationBaseAddress);
 
-		this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
+		// auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id);
+		// 
+		// if (dboffset == NULL)
+		// 	dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id2);
+		// 
+		// this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
 	}
 
+	void SetFromVtbl(void* a_type, int fn)
+	{
+		this->Offset = (void*)(((*reinterpret_cast<uintptr_t*>(a_type)) + (fn * 8)));
+	}
 
 	operator T()
 	{
@@ -44,7 +54,7 @@ public:
 
 	uintptr_t operator=(uintptr_t address)
 	{
-		this->Offset = reinterpret_cast<void*>(address);
+		return reinterpret_cast<uintptr_t>(this->Offset = reinterpret_cast<void*>(address));
 	}
 
 	uintptr_t operator += (uint64_t count)
@@ -66,18 +76,41 @@ public:
 
 	uintptr_t address()
 	{
-		return (uintptr_t)Offset;
+		return reinterpret_cast<uintptr_t>(Offset);
+	}
+
+	uintptr_t rawaddress()
+	{
+		return (reinterpret_cast<uintptr_t>(Offset) - RelocationManager::RelocationManager::ApplicationBaseAddress);
+	}
+
+
+	// this functions is a bit... annoying?... messy!
+	uintptr_t write_vfunc_P(int idx, void* a_newFunc)
+	{
+		auto newFunc = a_newFunc;
+
+		uintptr_t addr = (uintptr_t)Offset + (sizeof(void*) * idx);
+		const auto result = *reinterpret_cast<uintptr_t*>(addr);
+
+		OrbisMemoryHandler::WriteType<void*>(addr, &newFunc);
+		return result;
+	}
+
+	uintptr_t write_vfunc(int idx, void* a_newFunc)
+	{
+		return write_vfunc_P(idx, a_newFunc);
 	}
 
 	template <class X>
 	uintptr_t write_vfunc(int idx, X a_newFunc)
 	{
-		uintptr_t addr = (uintptr_t)Offset + (sizeof(void*) * idx);
-		const auto result = *reinterpret_cast<uintptr_t*>(addr);
-		OrbisMemoryHandler::WriteType(addr, (uintptr_t)a_newFunc);
-		return result;
+		auto data = &a_newFunc;
+		void* ptr = *reinterpret_cast<void**>(data);
+		
+		auto ret = write_vfunc_P(idx, ptr);
+		return ret;
 	}
-
 private:
 	void*		Offset;
 };

@@ -1,31 +1,25 @@
 #include "../include/FIleHandler.h"
 #include "../include/MessageHandler.h"
 #include "../include/Macro.h"
+#include "../include/SafeTypes.h"
+
+#include "../include/SystemWrapper.h"
 
 namespace FIleHandler
 {
-	FIleHandler::FIleHandler(char* relpath, int Type, bool abs) :
+	FIleHandler::FIleHandler(char* path, int Type, int flags) :
 		FDPos(0)
 	{
-		if (!relpath)
+		if (!path)
 			return;
 
-		char path[260]{ 0 };
-		if (abs)
-		{
-			sprintf(path, "%s", relpath);
-		}
-		else
-		{
-			sprintf(path, COMBINE(ROOT, "%s"), relpath);
-		}
-
-		this->FilePath = strdup(path);
+		this->IsCopy = false;
+		this->FilePath = path;
 		this->FileType = Type;
 
-		if ((this->FileDescriptor = open(path, O_RDONLY, 0)) < 0)
+		if ((this->FileDescriptor = open(FilePath, flags, 0000777)) < 0)
 		{
-			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx", __FUNCTION__, path, this->FileDescriptor);
+			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx(%s)", __FUNCTION__, FilePath, this->FileDescriptor, strerror(errno));
 			return;
 		}
 
@@ -36,7 +30,8 @@ namespace FIleHandler
 		}
 	}
 
-	FIleHandler::FIleHandler(char* relpath, int Type, bool abs, bool Create) :
+	//
+	FIleHandler::FIleHandler(char* relpath, int Type, int flags, bool abs) :
 		FDPos(0)
 	{
 		if (!relpath)
@@ -52,12 +47,13 @@ namespace FIleHandler
 			sprintf(path, COMBINE(ROOT, "%s"), relpath);
 		}
 
+		this->IsCopy = true;
 		this->FilePath = strdup(path);
 		this->FileType = Type;
 
-		if ((this->FileDescriptor = open(path, O_RDWR | O_CREAT, 0)) < 0)
+		if ((this->FileDescriptor = open(FilePath, flags, 0000777)) < 0)
 		{
-			MessageHandler::KernelPrintOut("%s Failed to open file for 0x%lx", __FUNCTION__, this->FileDescriptor);
+			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx(%s)", __FUNCTION__, FilePath, this->FileDescriptor, strerror(errno));
 			return;
 		}
 
@@ -70,11 +66,14 @@ namespace FIleHandler
 
 	FIleHandler::~FIleHandler()
 	{
-		free(this->FilePath);
+		if (this->IsCopy)
+		{
+			free(this->FilePath);
+		}
 
 		if ((this->RET = close(this->FileDescriptor)) != 0)
 		{
-			MessageHandler::KernelPrintOut("%s Failed to close file for 0x%lx", __FUNCTION__, this->RET);
+			MessageHandler::KernelPrintOut("%s Failed to close file for 0x%lx(%s)", __FUNCTION__, this->RET, strerror(errno));
 			return;
 		}
 	}
@@ -161,22 +160,21 @@ namespace FIleHandler
 
 		if ((this->RET = write(this->FileDescriptor, src, srcLength)) > 0)
 		{
-			MessageHandler::KernelPrintOut("%s %d", __FUNCTION__, __LINE__);
 			this->FDPos += srcLength;
 			return srcLength;
 		}
 
-		MessageHandler::KernelPrintOut("%s failed with 0x%lx", __FUNCTION__, this->RET);
+		MessageHandler::KernelPrintOut("%s failed with 0x%lx(%s)", __FUNCTION__, this->RET, strerror(errno));
 		return -1;
 	}
 
-	uint64_t FIleHandler::ReadStringW(wchar_t* dst, int(*_fn)(int), uint64_t len, char endl, char endl2)
+	uint64_t FIleHandler::ReadStringW(wchar_t_t* dst, int(*_fn)(int), uint64_t len, char endl, char endl2)
 	{
 		// string length
 		uint64_t stringlength = 0;
 
 		// string character 
-		wchar_t chr = 0;
+		wchar_t_t chr = 0;
 
 		while (true)
 		{
@@ -188,7 +186,7 @@ namespace FIleHandler
 			if (this->IsStreamVaild())
 			{
 				// reads bytes into a buffer with the size of length and returns the size read, -1 in case of error
-				if (this->ReadBytes(&chr, sizeof(wchar_t)) == -1)
+				if (this->ReadBytes(&chr, sizeof(wchar_t_t)) == -1)
 					return -1;
 			}
 			else
@@ -228,7 +226,7 @@ namespace FIleHandler
 		// UTF-16 specific reader... wchar_t...
 		if (this->FileType == UTF16)
 		{
-			return this->ReadStringW((wchar_t*)dst, _fn, len, endl, endl2);
+			return this->ReadStringW((wchar_t_t*)dst, _fn, len, endl, endl2);
 		}
 
 		// string length
@@ -282,5 +280,10 @@ namespace FIleHandler
 
 		// return on error
 		return -1;
+	}
+
+	struct stat* FIleHandler::GetFileStats()
+	{
+		return &this->FileStats;
 	}
 }

@@ -72,14 +72,18 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\CPU.h" />
     <ClInclude Include="include\CryptoHandler.h" />
     <ClInclude Include="include\EMOJI.h" />
     <ClInclude Include="include\FIleHandler.h" />
     <ClInclude Include="include\FileSystem.h" />
+    <ClInclude Include="include\FramerateTracker.h" />
+    <ClInclude Include="include\GPU.h" />
     <ClInclude Include="include\INIHandler.h" />
     <ClInclude Include="include\Logger.h" />
     <ClInclude Include="include\Macro.h" />
     <ClInclude Include="include\MemoryHandler.h" />
+    <ClInclude Include="include\MemoryUsageTracker.h" />
     <ClInclude Include="include\MessageHandler.h" />
     <ClInclude Include="include\Mira.h" />
     <ClInclude Include="include\Mutex.h" />
@@ -88,16 +92,23 @@
     <ClInclude Include="include\OrbisSFOHandler.h" />
     <ClInclude Include="include\Relocation.h" />
     <ClInclude Include="include\RelocationManager.h" />
+    <ClInclude Include="include\SafeTypes.h" />
+    <ClInclude Include="include\std.h" />
     <ClInclude Include="include\SystemWrapper.h" />
     <ClInclude Include="include\Trampoline.h" />
+    <ClInclude Include="include\vector.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\CPU.cpp" />
     <ClCompile Include="source\CryptoHandler.cpp" />
     <ClCompile Include="source\FIleHandler.cpp" />
     <ClCompile Include="source\FileSystem.cpp" />
+    <ClCompile Include="source\FramerateTracker.cpp" />
+    <ClCompile Include="source\GPU.cpp" />
     <ClCompile Include="source\INIHandler.cpp" />
     <ClCompile Include="source\Logger.cpp" />
     <ClCompile Include="source\MemoryHandler.cpp" />
+    <ClCompile Include="source\MemoryUsageTracker.cpp" />
     <ClCompile Include="source\MessageHandler.cpp" />
     <ClCompile Include="source\Mira.cpp" />
     <ClCompile Include="source\Mutex.cpp" />
@@ -107,9 +118,6 @@
     <ClCompile Include="source\RelocationManager.cpp" />
     <ClCompile Include="source\SystemWrapper.cpp" />
     <ClCompile Include="source\Trampoline.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="note.txt" />
   </ItemGroup>
   <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

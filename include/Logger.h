@@ -22,7 +22,27 @@ typedef sockaddr_in  SceNetSockaddrIn;
 #include <unistd.h>
 #include <cstdlib>
 #include <string.h>
- 
+#include <stdarg.h>
+#include <inttypes.h>
+
+#ifndef _MESSAGE
+#define _MESSAGE(fmt) Log::Log::GetSingleton()->Write(fmt);
+#endif
+
+#ifndef _MESSAGE_VA
+#define _MESSAGE_VA(fmt, ...) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__);
+#endif
+
+#ifndef _MESSAGELAST
+#define _MESSAGELAST(fmt) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__); \
+Log::Log::GetSingleton()->Write(fmt);
+#endif
+
+#ifndef _MESSAGELAST_VA
+#define _MESSAGELAST_VA(fmt, ...) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__); \
+Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__);
+#endif
+
 namespace Log
 {
 	class Log
@@ -71,14 +91,23 @@ namespace Log
 			return &_OrbisLog;
 		}
 
+		// debug stuff
+		// Singleton implementation for a single class
+		static Log* GetMiraLog()
+		{
+			static Log _OrbisLog;
+			return &_OrbisLog;
+		}
+
 	private:
 		// file descriptor when a local file is used, socket when the network is used
-		int FD;
-		uint64_t ret;
+		int			FD;
+		uint64_t	ret;
 		const char* LogPath;
 
-		bool UseNet;
-		int opt;
+		bool		UseNet;
+		int			opt;
+
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		SceNetSockaddrIn NetworkServer;
 #endif

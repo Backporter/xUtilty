@@ -26,7 +26,10 @@ namespace RelocationManager
 	static RelocationManager RelocationManger;
 
 	uintptr_t RelocationManager::ApplicationBaseAddress = 0;
-	
+
+	// 
+	uintptr_t RelocationManager::LibkernelBaseAddress = 0;
+
 	RelocationManager::RelocationManager()
 	{
 		OrbisSystemWrapper::initialize();
@@ -34,7 +37,7 @@ namespace RelocationManager
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		ApplicationBaseAddress = OrbisMiraHandler::GetBaseAddress();
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
-		ApplicationBaseAddress = memGetMapAddr((uint64_t)nninitStartup);
+		// ApplicationBaseAddress = memGetMapAddr((uint64_t)nninitStartup);
 #endif
 	}
 }

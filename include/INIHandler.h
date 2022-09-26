@@ -3,8 +3,11 @@
 #include <stdint.h>
 #include "../Third-Party/benhoyt/1.0/INIReader.h"
 
+// used to make sure the INI paths are changed when to whatever is needed in the event it's used outside of skyrim, refer to OF4EL for using.
+extern void SetPath(const char** a_log, const char** a_mira, const char** a_data, const char** a_appdata);
+
 namespace OrbisINIHandler
-{
+{	
 	struct ConsoleOptions 
 	{
 		// [General]
@@ -24,9 +27,15 @@ namespace OrbisINIHandler
 		bool	SpawnCCE;
 
 		// [CSEL]
+		bool		UseCustomIconURL;
 		const char* Icon;
 		bool		EnableGFxLogger;
 		bool		EnableDebugLogs;
+		bool		EnableVirtualMachineLog;
+
+		// [Game]
+		uint32_t	RenderTargetTextureWidth;
+		uint32_t	RenderTargetTextureHeight;
 
 		// [PSN]
 		bool		BypassPSN;
@@ -45,19 +54,19 @@ namespace OrbisINIHandler
 	public:
 		OrbisINIHandler();
 		virtual ~OrbisINIHandler();
-		virtual bool ParseCSELINI();
 
+		virtual bool			ParseINI();
 		virtual ConsoleOptions* GetINIOptions();
-		virtual INIReader* GetReader();
-		virtual bool IsVailid();
+		virtual INIReader*		GetReader();
+		virtual bool			IsVailid();
 
 		static OrbisINIHandler* GetSingleton()
 		{
 			static OrbisINIHandler _OrbisINIHandler;
 			return &_OrbisINIHandler;
 		}
-	private:
-		bool Parsed;
+	public:
+		bool		   Parsed;
 		const char*	   INIPath;
 		INIReader	   Reader;
 		ConsoleOptions INIOptions;

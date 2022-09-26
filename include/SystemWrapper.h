@@ -3,14 +3,21 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <vector>
 
+#include "SafeTypes.h"
 #include "MessageHandler.h"
 
 #if defined(__OPENORBIS__)
+#include <orbis/libkernel.h>
 #include <orbis/Rtc.h>
 typedef TimeTable SceRtcDateTime;
 #elif defined(__ORBIS__)
+#include <kernel.h>
 #include <rtc.h>
+#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+#include <switch.h>
+typedef TimeCalendarTime SceRtcDateTime;
 #endif
 
 namespace OrbisSystemWrapper
@@ -37,6 +44,29 @@ namespace OrbisSystemWrapper
 	extern int sysKernelGetUpdVersionret;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
+
+	typedef struct SceKernelModuleSegmentInfo 
+	{
+		void *baseAddr;
+		uint32_t size;
+		int32_t prot;
+	} SceKernelModuleSegmentInfo;
+
+	typedef struct SceKernelModuleInfo 
+	{
+		size_t size;
+		char name[256];
+		SceKernelModuleSegmentInfo segmentInfo[4];
+		uint32_t numSegments;
+		uint8_t fingerprint[20];
+
+		/* given the system refers to this structure by the size member i should be able to add into this*/
+		uint32_t handle;
+	} SceKernelModuleInfo;
+
+#ifndef SCE_KERNEL_MAX_MODULES
+#define SCE_KERNEL_MAX_MODULES 256
+#endif
 
 	struct OrbisKernelFirmwareInfo
 	{
@@ -76,6 +106,8 @@ namespace OrbisSystemWrapper
 		CWD_RESET,
 	};
 
+	extern std::vector<SceKernelModuleInfo> g_moduleList;
+
 	extern jbc_cred Orginalcred;
 	extern jbc_cred RootCred;
 	extern OrbisKernelFirmwareInfo Firmware;
@@ -86,6 +118,14 @@ namespace OrbisSystemWrapper
 	extern int32_t libjbchandle;
 	extern int32_t libchandle;
 
+	extern size_t(*mbstowcs)(wchar_t_t* dst, const char* src, size_t len);
+	extern size_t(*wcstombs)(char*, const wchar_t_t *, size_t);
+	extern    int(*vsprintf)(char*, const char*, va_list);
+	extern  void*(*malloc)(size_t);
+	extern  void(*free)(void*);
+	typedef int32_t(*SceCoredumpHandler)(void* pCommon);
+
+	extern int(*sceKernelGetModuleInfo)(uint32_t handle, SceKernelModuleInfo* info);
 	extern int(*ioctl)(int fd, unsigned long request, ...);
 	extern int(*sysconf)(int num);
 	extern int(*sceKernelGetSystemSwVersion)(OrbisKernelFirmwareInfo * data);
@@ -94,7 +134,10 @@ namespace OrbisSystemWrapper
 	extern int64_t(*sceKernelSendNotificationRequest)(int64_t unk1, char* Buffer, size_t size, int64_t unk2);
 	extern char*(*sceKernelGetFsSandboxRandomWord)();
 	extern int(*sceKernelDebugOutText)(int Channel, const char* text);
+	
+	extern int(*get_page_table_stats)(int, int, int*, int*);
 	extern int(*sceKernelInternalMemoryGetAvailableSize)(size_t*);
+	
 	extern uint64_t(*sceKernelGetCpuFrequency)();
 	extern int(*sceKernelGetCpuUsage)(struct proc*, int*);
 	extern int(*sceKernelGetThreadName)(unsigned int, char*);
@@ -105,6 +148,18 @@ namespace OrbisSystemWrapper
 	extern void(*jbc_run_as_root)(void(*fn)(void *arg), void *arg, int cwd_mode);
 	extern int(*jbc_mount_in_sandbox)(const char *system_path, const char *mnt_name);
 	extern int(*jbc_unmount_in_sandbox)(const char *mnt_name);
+
+	typedef struct	pthread_mutex*		pthread_mutex_t_t;
+	typedef struct	pthread_mutex_attr* pthread_mutexattr_t_t;
+
+	extern int (*pthread_mutexattr_init)    (pthread_mutexattr_t_t*);
+	extern int (*pthread_mutex_init)        (pthread_mutex_t_t*, const pthread_mutexattr_t_t*);
+	extern int (*pthread_mutexattr_destroy) (pthread_mutexattr_t_t*);
+	extern int (*pthread_mutex_destroy)     (pthread_mutex_t_t*);
+	extern int (*pthread_mutex_trylock)     (pthread_mutex_t_t*);
+	extern int (*pthread_mutex_lock)        (pthread_mutex_t_t*);
+	extern int (*pthread_mutex_unlock)      (pthread_mutex_t_t*);
+#endif
 
 	// Set root cred
 	void Jailbreak();
@@ -118,12 +173,21 @@ namespace OrbisSystemWrapper
 	// Unmounts "/usb_X/" from within the sandbox
 	bool UnmountUSB(int index);
 
+	// TimeCalendarTime - NX
+	// SceRtcDateTime - SCEE
 	void UpdateRTC(SceRtcDateTime* now);
 
 	bool Dump(const char* TypeName, void* base, int size);
 
-#endif
-
 	extern bool Inited;
 	void initialize();
+	bool initializeModuleList();
+	int GetModuleHandle(const char* a_name);
+
+	// checks if a prx is loaded
+	// a_name = "example_name.prx"
+	// Mira = using mira?
+	bool IsLoaded(const char* a_name, bool a_usemira);
+
+	void HandleCreedSwapFromType(int PathType, bool jailbreak);
 }

@@ -19,7 +19,7 @@ namespace OrbisDialogueManger
 
 	}
 
-	void OrbisDialogueManger::InitializeMsgDialog(char* message, int mode, int ButtonType)
+	void OrbisDialogueManger::InitializeMsgDialog(const char* message, int mode, int ButtonType)
 	{
 		sceMsgDialogParamInitialize(&this->MsgDialogParam);
 		memset(&this->MsgDialogUserMessageParam, 0, sizeof(this->MsgDialogUserMessageParam));
@@ -35,7 +35,7 @@ namespace OrbisDialogueManger
 		this->MsgDialogParam.userMsgParam		   = &this->MsgDialogUserMessageParam;
 	}
 
-	void OrbisDialogueManger::InitializeMsgDialog2(char* message, char* btn1, char* btn2, int mode, int ButtonType)
+	void OrbisDialogueManger::InitializeMsgDialog2(const char* message, char* btn1, char* btn2, int mode, int ButtonType)
 	{
 		sceMsgDialogParamInitialize(&this->MsgDialogParam);
 		memset(&this->MsgDialogUserMessageParam, 0, sizeof(this->MsgDialogUserMessageParam));
@@ -143,7 +143,7 @@ namespace OrbisDialogueManger
 		return 0;
 	}
 
-	void OrbisDialogueManger::InitializeImeDialog(const wchar_t* title, const wchar_t* exampletext, float x, float y, int type, int enterlabeltype, int option, int max_length)
+	void OrbisDialogueManger::InitializeImeDialog(const char* title, const char* exampletext, float x, float y, int type, int enterlabeltype, int option, int max_length)
 	{
 		memset(&this->ImeDialogParam, 0, sizeof(this->ImeDialogParam));
 
@@ -166,7 +166,7 @@ namespace OrbisDialogueManger
 		this->ImeDialogParam.filter				 = NULL;
 		this->ImeDialogParam.option				 = option;
 		this->ImeDialogParam.maxTextLength		 = max_length;
-		this->ImeDialogParam.inputTextBuffer	 = this->Buffer = new wchar_t[max_length];
+		this->ImeDialogParam.inputTextBuffer	 = reinterpret_cast<wchar_t*>(this->Buffer = new wchar_t_t[max_length]);
 		memset(this->Buffer, 0, max_length);
 
 		this->ImeDialogParam.posx				 = x;
@@ -178,8 +178,8 @@ namespace OrbisDialogueManger
 		this->ImeDialogParam.horizontalAlignment = OrbisHAlignment::ORBIS_H_LEFT;
 		this->ImeDialogParam.verticalAlignment	 = OrbisVAlignment::ORBIS_V_TOP;
 #endif
-		this->ImeDialogParam.placeholder		 = exampletext;
-		this->ImeDialogParam.title				 = title;
+		this->ImeDialogParam.placeholder		 = (const wchar_t*)CreateExample(exampletext);
+		this->ImeDialogParam.title				 = (const wchar_t*)CreateTitle(title);
 
 	}
 
@@ -229,7 +229,7 @@ namespace OrbisDialogueManger
 		}
 
 		if (ImeDialogResult.endstatus != 0) { return -1; }
-		wcstombs(buf, this->ImeDialogParam.inputTextBuffer, 2048);
+		OrbisSystemWrapper::wcstombs(buf, (const wchar_t_t*)this->ImeDialogParam.inputTextBuffer, 2048);
 		
 		free(this->ImeDialogParam.inputTextBuffer);
 		this->ImeDialogParam.inputTextBuffer = nullptr;

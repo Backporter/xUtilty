@@ -28,6 +28,8 @@ namespace OrbisSFOHandler
 				free((void*)this->Data[i].Key);
 			}
 		}
+
+		this->Data.clear();
 	}
 
 	bool sfo_parser::ParseSFO(bool FixJailedState, char* Path)
@@ -119,9 +121,21 @@ namespace OrbisSFOHandler
 			char path[PATH_MAX];
 			sprintf(path, "/system_data/priv/appmeta/%s/param.sfo", dir.FileName.substr(0, 9).c_str());
 
-			if (!this->ParseSFO(true, path))
+			if (this->ParseSFO(true, path))
 			{
-				MessageHandler::KernelPrintOut("failed to parse sfo");
+				if (strcasecmp(this->GetKeySTR("CATEGORY"), "gde") == 0)
+				{
+					this->~sfo_parser();
+					continue;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				MessageHandler::KernelPrintOut("failed to parse sfo(%s)", path);
 			}
 		}
 	}

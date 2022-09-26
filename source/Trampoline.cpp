@@ -27,7 +27,6 @@ extern void SetMemoryPermission(uintptr_t, size_t, MemoryPermission);
 extern void FreeMemoryBlock(uintptr_t, size_t);
 #endif
 
-
 namespace Trampoline
 {
 	Trampoline::Trampoline():
@@ -38,20 +37,22 @@ namespace Trampoline
 		SystemDeallocate();
 	}
 
-	bool Trampoline::SystemAllocate(size_t TrampolineSize)
+	bool Trampoline::SystemAllocate(size_t TrampolineSize, size_t alignment)
 	{
 		int32_t ret = 0;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if ((ret = sceKernelAllocateDirectMemory(0, sceKernelGetDirectMemorySize(), TrampolineSize, TrampolineSize, 0, &SystemAllocatedOffset)) != 0)
+		if ((ret = sceKernelAllocateDirectMemory(0, sceKernelGetDirectMemorySize(), TrampolineSize, alignment, 0, &SystemAllocatedOffset)) != 0)
 		{
 			MessageHandler::Notify("Failed to allocate Direct Memory! sceKernelAllocateDirectMemory failed 0x%08X", ret);
 			return false;
 		}
-#endif
 		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0x400000 : RelocationManager::RelocationManager::ApplicationBaseAddress);
+#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0xFFFF8001 : RelocationManager::RelocationManager::ApplicationBaseAddress);
+#endif
 
-		// nn::os::AllocateMemoryBlock(SystemAllocatedMemory, TrampolineSize);
+// nn::os::AllocateMemoryBlock(SystemAllocatedMemory, TrampolineSize);
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		if ((ret = sceKernelMapDirectMemory(&SystemAllocatedMemory, TrampolineSize, 0x02, 0, SystemAllocatedOffset, TrampolineSize)) != 0)
 		{
@@ -85,6 +86,13 @@ namespace Trampoline
 #endif
 			SystemAllocatedMemory = NULL;
 		}
+	}
+
+	void Trampoline::SystemRestore(off_t src, size_t src_len)
+	{
+#if defined(__ORBIS__) || defined(__OPENORBIS__)
+		assert(sceKernelReleaseDirectMemory(src, src_len) == 0);
+#endif
 	}
 
 	void* Trampoline::StartTake()
@@ -143,4 +151,5 @@ namespace Trampoline
 #endif
 
 	Trampoline g_Trampoline;
+
 }

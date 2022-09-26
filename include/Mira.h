@@ -154,6 +154,9 @@ namespace OrbisMiraHandler
 	// main function, this will get all modules/exec loaded within our process
 	std::vector<ProcessModuleList::Module> ProcessModules(int m_DriverHandle);
 
+	// Init Module List if not already
+	void InitializeModueList();
+
 	// mira specific tools, un-used and un-tested for full use
 	bool ReadMemory(void* p_Address, void* p_OutData, uint32_t p_Size);
 	bool WriteMemory(void* p_Address, void* p_InData, uint32_t p_Size);

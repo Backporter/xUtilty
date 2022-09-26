@@ -1,5 +1,6 @@
 @echo off
 
+REN WARNING -fshort-wchar IS USED, THIS REQUIRES ALL FUNCTIONS THAT USE WCHAR_T TO BE MANUALLY IMPORTED
 set libraries=-lc -lkernel -lc++
 
 set intdir=ORBIS_Debug

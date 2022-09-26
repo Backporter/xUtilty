@@ -1,6 +1,8 @@
 #include "../include/Logger.h"
 #include "../include/FileSystem.h"
 #include "../include/MessageHandler.h"
+#include "../include/INIHandler.h"
+#include "../include/SystemWrapper.h"
 
 namespace Log
 {
@@ -21,7 +23,7 @@ namespace Log
 
 	bool Log::Open(const char* path)
 	{
-		if ((FD = open(path, O_CREAT | O_RDWR | O_SYNC | O_TRUNC, 0666)) < 0)
+		if ((FD = open(path, O_CREAT | O_RDWR | O_SYNC | O_TRUNC | O_NONBLOCK, 0666)) < 0)
 		{
 			// MessageHandler::KernelPrintOut("%s %s %d failed to open path(%s) for log", __FILE__, __FUNCTION__, __LINE__, path);
 			close(FD);
@@ -54,7 +56,7 @@ namespace Log
 		}
 		
 		// open said log path
-		if ((FD = open(buff, O_CREAT | O_RDWR | O_SYNC | O_TRUNC, 0666)) < 0)
+		if ((FD = open(buff, O_CREAT | O_RDWR | O_SYNC | O_TRUNC | O_NONBLOCK, 0666)) < 0)
 		{
 			close(FD);
 			// MessageHandler::KernelPrintOut("%s %s %d failed to open path(%s) for log", __FILE__, __FUNCTION__, __LINE__, buff);
@@ -91,14 +93,19 @@ namespace Log
 		}
 
 		char endl = '\n';
-		char buf[8096];
+		char buf[2048];
 
 		va_list args;
 		va_start(args, MessageFMT);
-		size_t len = vsprintf(buf, MessageFMT, args);
+		size_t len; 
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		if (OrbisSystemWrapper::vsprintf)
+			len = OrbisSystemWrapper::vsprintf(buf, MessageFMT, args);
+		else
+#endif
+			len = vsprintf(buf, MessageFMT, args);
 		va_end(args);
 		assert(len > 0);
-
 
 		if ((ret = write(FD, buf, len)) != len)
 		{ 
@@ -112,6 +119,9 @@ namespace Log
 			// MessageHandler::KernelPrintOut("%s %s %d failed to write endl to log(%s) ret: 0x%lx", __FILE__, __FUNCTION__, __LINE__, LogPath, ret);
 			return false;
 		}
+
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+			MessageHandler::KernelPrintOut(buf);
 
 		return true;
 	}
@@ -127,7 +137,13 @@ namespace Log
 		char endl = '\n';
 		char buf[2048];
 
-		size_t len = vsprintf(buf, MessageFMT, list);
+		size_t len;
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		if (OrbisSystemWrapper::vsprintf)
+			len = OrbisSystemWrapper::vsprintf(buf, MessageFMT, list);
+		else
+#endif
+			len = vsprintf(buf, MessageFMT, list);
 		assert(len > 0);
 
 		if ((ret = write(FD, buf, len)) != len)
@@ -142,6 +158,9 @@ namespace Log
 			// MessageHandler::KernelPrintOut("%s %s %d failed to write endl to log(%s) ret: 0x%lx", __FILE__, __FUNCTION__, __LINE__, LogPath, ret);
 			return false;
 		}
+
+		if (OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->EnableDebugLogs)
+			MessageHandler::KernelPrintOut(buf);
 
 		return true;
 	}
@@ -219,7 +238,13 @@ namespace Log
 
 		va_list args;
 		va_start(args, MessageFMT);
-		size_t len = vsprintf(buf, MessageFMT, args);
+		size_t len; 
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		if (OrbisSystemWrapper::vsprintf)
+			len = OrbisSystemWrapper::vsprintf(buf, MessageFMT, args);
+		else
+#endif
+			vsprintf(buf, MessageFMT, args);
 		va_end(args);
 		assert(len > 0);
 

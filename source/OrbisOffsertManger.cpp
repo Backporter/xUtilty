@@ -29,7 +29,16 @@ namespace OrbisOffsetManger
 			APP_VER = "01.09";
 #endif
 
+		// check if /app0/data/%s-%s.offset exists
 		OrbisFileSystem::CreateFullPath(path, OrbisFileSystem::App, "data/CSEL/%s-%s.offset", TITILE, APP_VER);
+		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, path, false))
+		{
+			OffsetFIle = strdup(path);
+			return;
+		}
+		
+		// check if /data/data/%s-%s.offset exists
+		OrbisFileSystem::CreateFullPath(path, OrbisFileSystem::Data, "data/CSEL/%s-%s.offset", TITILE, APP_VER);
 		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, path, false))
 		{
 			OffsetFIle = strdup(path);
@@ -44,6 +53,9 @@ namespace OrbisOffsetManger
 	bool      OffsetManger::Parse()
 	{
 	 	OffsetDataBase::InternalOffsetStructure entry{ 0 };
+
+		if (!OffsetFIle)
+			return false;
 
 	 	if ((this->FD = open(OffsetFIle, 0, 0)) < 0)
 	 	{
@@ -86,9 +98,11 @@ namespace OrbisOffsetManger
 	successful:
 		close(this->FD);
 		return true;
+		IsParsed = true;
 	error:
 		close(this->FD);
 		return false;
+		IsParsed = true;
 	}
 
 	uint64_t  OffsetManger::GetOffset(const char* ID)
@@ -132,7 +146,7 @@ namespace OrbisOffsetManger
 
 		for (int i = 0; i < Header.Count; i++)
 		{
-			if ((this->RET = read(this->FD, &entry, sizeof(OffsetDataBase::InternalOffsetStructure))) <= 0)
+			if ((this->RET = read(this->FD, &entry, sizeof(entry))) <= 0)
 			{
 				MessageHandler::KernelPrintOut("Failed to read entry for 0x%lx(ID: %s, error id %d/%s)", this->RET, ID, errno, strerror(errno));
 				goto safeexit;
@@ -159,10 +173,12 @@ namespace OrbisOffsetManger
 	uintptr_t OffsetManger::_GetOffset(const char* ID)
 	{
 		auto EntriesSize = this->Entries.size();
-		if (EntriesSize <= 0)
+		if (!IsParsed && EntriesSize <= 0)
+		{
 			if (!this->Parse())
 				return 0;
-		
+		}
+
 		for (size_t i = 0; i < EntriesSize; i++)
 		{
 			auto entry = this->Entries[i];
