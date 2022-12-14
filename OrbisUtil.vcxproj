@@ -59,6 +59,8 @@
       <DisableSpecificWarnings>unknown-pragmas;unused-private-field;c++1z-extensions</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <CppExceptions>true</CppExceptions>
+      <CppLanguageStd>Cpp14</CppLanguageStd>
+      <OptimizationLevel>Level0</OptimizationLevel>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -72,6 +74,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\bitFlags.h" />
     <ClInclude Include="include\CPU.h" />
     <ClInclude Include="include\CryptoHandler.h" />
     <ClInclude Include="include\EMOJI.h" />
@@ -84,19 +87,27 @@
     <ClInclude Include="include\Macro.h" />
     <ClInclude Include="include\MemoryHandler.h" />
     <ClInclude Include="include\MemoryUsageTracker.h" />
+    <ClInclude Include="include\Memory\IMemoryAllocator.h" />
+    <ClInclude Include="include\Memory\IMemoryAllocatorSTL.h" />
     <ClInclude Include="include\MessageHandler.h" />
     <ClInclude Include="include\Mira.h" />
     <ClInclude Include="include\Mutex.h" />
     <ClInclude Include="include\OrbisDialogueManger.h" />
     <ClInclude Include="include\OrbisOffsertManger.h" />
     <ClInclude Include="include\OrbisSFOHandler.h" />
+    <ClInclude Include="include\Platform.h" />
     <ClInclude Include="include\Relocation.h" />
     <ClInclude Include="include\RelocationManager.h" />
     <ClInclude Include="include\SafeTypes.h" />
+    <ClInclude Include="include\SaveData.h" />
     <ClInclude Include="include\std.h" />
     <ClInclude Include="include\SystemWrapper.h" />
     <ClInclude Include="include\Trampoline.h" />
-    <ClInclude Include="include\vector.h" />
+    <ClInclude Include="include\Types.h" />
+    <ClInclude Include="include\WIP\Streams\IFIleStream.h" />
+    <ClInclude Include="include\WIP\Streams\IMemoryStream.h" />
+    <ClInclude Include="include\WIP\Streams\IStream.h" />
+    <ClInclude Include="Third-Party\iwanders\Compile_Time_CRC32\compile_time_crc.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\CPU.cpp" />
@@ -115,6 +126,7 @@
     <ClCompile Include="source\OrbisDialogueManger.cpp" />
     <ClCompile Include="source\OrbisOffsertManger.cpp" />
     <ClCompile Include="source\OrbisSFOHandler.cpp" />
+    <ClCompile Include="source\Platform.cpp" />
     <ClCompile Include="source\RelocationManager.cpp" />
     <ClCompile Include="source\SystemWrapper.cpp" />
     <ClCompile Include="source\Trampoline.cpp" />

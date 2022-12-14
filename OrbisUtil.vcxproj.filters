@@ -20,12 +20,21 @@
     <ClInclude Include="include\SystemWrapper.h" />
     <ClInclude Include="include\Trampoline.h" />
     <ClInclude Include="include\SafeTypes.h" />
-    <ClInclude Include="include\vector.h" />
     <ClInclude Include="include\CPU.h" />
     <ClInclude Include="include\GPU.h" />
     <ClInclude Include="include\MemoryUsageTracker.h" />
     <ClInclude Include="include\FramerateTracker.h" />
     <ClInclude Include="include\std.h" />
+    <ClInclude Include="include\Platform.h" />
+    <ClInclude Include="Third-Party\iwanders\Compile_Time_CRC32\compile_time_crc.hpp" />
+    <ClInclude Include="include\Memory\IMemoryAllocator.h" />
+    <ClInclude Include="include\Types.h" />
+    <ClInclude Include="include\WIP\Streams\IMemoryStream.h" />
+    <ClInclude Include="include\WIP\Streams\IStream.h" />
+    <ClInclude Include="include\Memory\IMemoryAllocatorSTL.h" />
+    <ClInclude Include="include\WIP\Streams\IFIleStream.h" />
+    <ClInclude Include="include\bitFlags.h" />
+    <ClInclude Include="include\SaveData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\CryptoHandler.cpp" />
@@ -47,5 +56,6 @@
     <ClCompile Include="source\GPU.cpp" />
     <ClCompile Include="source\MemoryUsageTracker.cpp" />
     <ClCompile Include="source\FramerateTracker.cpp" />
+    <ClCompile Include="source\Platform.cpp" />
   </ItemGroup>
 </Project>

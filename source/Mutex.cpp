@@ -1,101 +1,69 @@
 #include "../include/Mutex.h"
 #include "../include/MessageHandler.h"
 
-namespace OrbisMutex
+namespace Mutex
 {
 	// game
-	OrbisMutex GlobalMutex5;
+	Mutex GlobalMutex5;
 
 	// UI
-	OrbisMutex GlobalMutex10;
+	Mutex GlobalMutex10;
+	
+	// tasklet
+	Mutex GlobalMutex11;
 
-	OrbisMutex::OrbisMutex(const char* name):
-		LASTFN(nullptr), RET(0)
+	Mutex::Mutex(const char* name)
 	{
-		if ((this->RET = pthread_mutexattr_init(&this->mutexattr)) != 0)
+		if (!pthread_mutexattr_init(&m_mutexAttr))
 		{
-			this->LASTFN = "pthread_mutexattr_init";
-			this->PrintLastError();
-			return;
-		}
-
-		if ((this->RET = pthread_mutex_init(&this->mutex, &this->mutexattr)) != 0)
-		{
-			this->LASTFN = "pthread_mutex_init";
-			this->PrintLastError();
-			return;
-		}
-		
-	}
-
-	OrbisMutex::~OrbisMutex()
-	{
-		if ((this->RET = pthread_mutexattr_destroy(&this->mutexattr)) != 0)
-		{
-			this->LASTFN = "pthread_mutexattr_destroy";
-			this->PrintLastError();
-			return;
-		}
-
-		if ((this->RET = pthread_mutex_destroy(&this->mutex)) != 0)
-		{
-			this->LASTFN = "pthread_mutex_destroy";
-			this->PrintLastError();
-			return;
+			pthread_mutex_init(&m_mutex, &m_mutexAttr);
 		}
 	}
 
-	bool OrbisMutex::TryLock()
+	Mutex::~Mutex()
 	{
-		if ((this->RET = pthread_mutex_trylock(&this->mutex)) == 0)
+		if (!pthread_mutexattr_destroy(&m_mutexAttr))
+		{
+			pthread_mutex_destroy(&m_mutex);
+		}
+
+	}
+
+	bool Mutex::TryLock()
+	{
+		if (!pthread_mutex_trylock(&m_mutex))
 			return true;
-		
-		this->LASTFN = "pthread_mutex_trylock";
-		return false;
 
-	}
-
-	bool OrbisMutex::Lock()
-	{
-		if ((this->RET = pthread_mutex_lock(&this->mutex)) == 0)
-			return true;
-		
-		this->LASTFN = "pthread_mutex_lock";
 		return false;
 	}
 
-	bool OrbisMutex::TryUnlock()
+	bool Mutex::Lock()
 	{
-		if ((this->RET = pthread_mutex_unlock(&this->mutex)) == 0)
+		if (!pthread_mutex_lock(&m_mutex))
+			return true;
+		
+		return false;
+	}
+
+	bool Mutex::TryUnlock()
+	{
+		if (!pthread_mutex_unlock(&m_mutex))
 		{
-			if ((this->RET = pthread_mutex_lock(&this->mutex)) == 0)
+			if (!pthread_mutex_lock(&m_mutex))
 				return true;
 
-			this->LASTFN = "pthread_mutex_lock";
 			return false;
 		}
-		
-		this->LASTFN = "pthread_mutex_unlock";
+
 		return false;
 
 	}
 
-	bool OrbisMutex::Unlock()
+	bool Mutex::Unlock()
 	{
-		if ((this->RET = pthread_mutex_unlock(&this->mutex)) == 0)
+		if (!pthread_mutex_unlock(&m_mutex))
 			return true;
 
-		this->LASTFN = "pthread_mutex_unlock";
 		return false;
-	}
-
-	bool OrbisMutex::IsOk()
-	{
-		return (this->RET == 0 && this->LASTFN == nullptr);
-	}
-
-	void OrbisMutex::PrintLastError()
-	{
-		MessageHandler::KernelPrintOut("%s failed with 0x%lx", this->LASTFN, this->RET);
 	}
 }

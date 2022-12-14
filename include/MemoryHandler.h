@@ -11,13 +11,9 @@
 
 namespace OrbisMemoryHandler
 {
-	inline void DumpStack(void* rdi_leaRBP, void* rsi_leaRSP)
-	{
-		OrbisSystemWrapper::Dump("RBP/RBP", rdi_leaRBP, 0x400);
-		OrbisSystemWrapper::Dump("RSP/RSP", rsi_leaRSP, 0x400);
-	}
-
 	void WriteBuffer(uint64_t dst, void* src, size_t len);
+
+	void ReadBuffer(void* dst, uint64_t src, size_t len);
 
 	template <typename T>
 	void WriteType(uintptr_t dst, T data, size_t size = sizeof(T))
@@ -44,4 +40,31 @@ namespace OrbisMemoryHandler
 			WriteBuffer(dst + RelocationManager::RelocationManager::RelocationManager::ApplicationBaseAddress, &data, size);
 		}
 	}
+
+	template <typename T>
+	void ReadType(uintptr_t dst, T data, size_t size = sizeof(T))
+	{
+		if constexpr (std::is_pointer<T>::value)
+		{
+			ReadBuffer(dst, data, size);
+		}
+		else
+		{
+			ReadBuffer(dst, &data, size);
+		}
+	}
+
+	template <typename T>
+	void ReadType(uintptr_t dst, T data, bool AddBase, size_t size = sizeof(T))
+	{
+		if constexpr (std::is_pointer<T>::value)
+		{
+			ReadBuffer(dst + RelocationManager::RelocationManager::RelocationManager::ApplicationBaseAddress, data, size);
+		}
+		else
+		{
+			ReadBuffer(dst + RelocationManager::RelocationManager::RelocationManager::ApplicationBaseAddress, &data, size);
+		}
+	}
+
 }

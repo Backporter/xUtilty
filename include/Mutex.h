@@ -1,44 +1,43 @@
 #pragma once
-#include "SystemWrapper.h"
+
+#include <pthread.h>
 
 #if defined(__ORBIS__)
 #include <mutex>
 #elif defined(__OPENORBIS__)
 #include <orbis/libkernel.h>
-typedef OrbisPthreadMutex ScePthreadMutex;
-typedef OrbisPthreadMutexattr ScePthreadMutexattr;
 #endif
 
-#include <pthread.h>
-
-namespace OrbisMutex
+namespace Mutex
 {
-	class OrbisMutex
+	class Mutex
 	{
 	public:
-		OrbisMutex(const char* name = NULL);
-		~OrbisMutex();
+		// using pthread_mutex_t = struct pthread_mutex*;
+		// using pthread_mutexattr_t = struct pthread_mutex_attr*;
+	public:
+		Mutex(const char* name = NULL);
+		~Mutex();
 
 		bool TryLock();
-		bool Lock();
-
 		bool TryUnlock();
+		bool Lock();
 		bool Unlock();
 
-		bool IsOk();
-		void PrintLastError();
-
-	private:
-		int			RET;
-		const char* LASTFN;
-
-		pthread_mutex_t	    mutex;
-		pthread_mutexattr_t mutexattr;
+		bool Enter() { return Lock(); }
+		bool Leave() { return Unlock(); }
+		bool TryEnter() { return TryLock(); }
+	protected:
+		pthread_mutex_t	    m_mutex;
+		pthread_mutexattr_t m_mutexAttr;
 	};
 
 	// game
-	extern OrbisMutex GlobalMutex5;
+	extern Mutex GlobalMutex5;
 
 	// UI
-	extern OrbisMutex GlobalMutex10;
+	extern Mutex GlobalMutex10;
+
+	// Tasklet
+	extern Mutex GlobalMutex11;
 }

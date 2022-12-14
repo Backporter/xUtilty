@@ -1,9 +1,9 @@
 #pragma once
+
 #include <stdint.h>
-#include <cstring>
 
 namespace CryptoHandler
 {
-	void GetCRC32(uint32_t* a_out, const char* a_source);
-	void GetCRC32_2(uint32_t* a_out, const char* a_source, uint32_t a_start = 0);
+	uint32_t GetCRC32(const char* a_str, uint32_t a_start = 0);
+	void     GetCRC32(uint32_t& a_dst, const char* a_str, uint32_t a_start = 0);
 }

@@ -113,7 +113,7 @@ namespace OrbisDialogueManger
 			static wchar_t_t buffer[512];
 			memset(buffer, 0, sizeof(buffer));
 
-			if ((ret = OrbisSystemWrapper::mbstowcs(buffer, a_title, strlen(a_title)) == static_cast<size_t>(-1)))
+			if ((ret = SystemWrapper::mbstowcs(buffer, a_title, strlen(a_title)) == static_cast<size_t>(-1)))
 				return nullptr;
 			else
 				return buffer;
@@ -128,7 +128,7 @@ namespace OrbisDialogueManger
 			static wchar_t_t buffer[512];
 			memset(buffer, 0, sizeof(buffer));
 
-			if ((ret = OrbisSystemWrapper::mbstowcs(buffer, a_ex, strlen(a_ex)) == static_cast<size_t>(-1)))
+			if ((ret = SystemWrapper::mbstowcs(buffer, a_ex, strlen(a_ex)) == static_cast<size_t>(-1)))
 				return nullptr;
 			else
 				return buffer;

@@ -1,20 +1,39 @@
 #pragma once
-#include "SystemWrapper.h"
 
-#include <memory>
-#include <stdlib.h>
-#include <errno.h>
-#include <string>
+#include <stdint.h>
 
-namespace Memory
-{
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-	static OrbisSystemWrapper::OrbisLibcMallocManagedSize size{ 0 };
+#if __ORBIS__
+#include <mspace.h>
+#elif __OPENORBIS__
+#include <orbis/_types/libc.h>
 #endif
-	size_t GetCurrentFreeMemoryLibc();
-	size_t GetCurrentAllocatedMemoryLibc();
 
-	size_t GetCurrentFreeMemory();
-	size_t GetCurrentAllocatedMemory();
+#include <errno.h>
 
+namespace MemoryUtil
+{
+	class MemoryUsageTracker
+	{
+	public:
+		MemoryUsageTracker();
+		~MemoryUsageTracker() { }
+		
+		int		Update();
+		size_t	GetMaxSystemSize();
+		size_t	GetCurrentSystemSize();
+
+		size_t	GetMaxInuseSize();
+		size_t	GetCurrentInuseSize();
+
+		size_t	GetCurrentFreeMemory();
+		size_t	GetCurrentAllocatedMemory();
+
+		static MemoryUsageTracker* GetSingleton()
+		{
+			static MemoryUsageTracker s;
+			return &s;
+		}
+	public:
+		SceLibcMallocManagedSize stats;
+	};
 }

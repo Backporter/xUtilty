@@ -5,16 +5,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <iostream>
+#include <map>
 
 #include "SystemWrapper.h"
 #include "MemoryHandler.h"
 #include "MessageHandler.h"
+#include "Mutex.h"
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 #include "../Third-Party/herumi/xbayk/6.00/xbyak.h"
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
-#include "../Third-Party/fujitsu/xbyak_aarch64/xbyak_aarch64.h"
-#endif
 
 #ifndef TRAMPOLINE_H_
 #define TRAMPOLINE_H_
@@ -70,8 +68,9 @@ namespace Trampoline
 	} __attribute__((__packed__));
 	static_assert(sizeof(TrampolineHook6) == 6, "Size of TrampolineHook6 is incorrect");
 
-#pragma region end
+#pragma endregion
 
+	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE.
 	class Trampoline
 	{
 	public:
@@ -86,11 +85,7 @@ namespace Trampoline
 		void  RestoreAllocated(const void* allocated);
 		void* Take(size_t size = 8);
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 		void* allocate(Xbyak::CodeGenerator&);
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
-		void* allocate(Xbyak_aarch64::CodeGenerator&);
-#endif
 		size_t Remain() { return SystemAllocatedLength - AllocSysAllocLen; }
 
 		template <size_t N>
@@ -144,12 +139,6 @@ namespace Trampoline
 		}
 
 		template <size_t N>
-		void WriteCall(uintptr_t source, Xbyak::CodeGenerator& xbayk)
-		{
-			return WriteCall<N>(source, uintptr_t(xbayk.getCode()));
-		}
-
-		template <size_t N>
 		void WriteJMP(uintptr_t source, uintptr_t dest)
 		{
 			if constexpr (N == 5)
@@ -200,10 +189,16 @@ namespace Trampoline
 		}
 
 		template <size_t N>
-		void WriteJMP(uintptr_t source, Xbyak::CodeGenerator& xbayk)
-		{
-			return WriteJMP<N>(source, uintptr_t(xbayk.getCode()));
-		}
+		void WriteCall(uintptr_t source, Xbyak::CodeGenerator& xbayk) { return WriteCall<N>(source, uintptr_t(xbayk.getCode())); }
+
+		template <size_t N>
+		void WriteJMP(uintptr_t source, Xbyak::CodeGenerator& xbayk) { return WriteJMP<N>(source, uintptr_t(xbayk.getCode())); }
+	public:
+		static Mutex::Mutex&			 getallocMutex() { static Mutex::Mutex mutex;					return mutex;	  }
+		static std::map<size_t, size_t>& getallocMap()   { static std::map<size_t, size_t> allocMap;	return allocMap;  }
+		static Trampoline&				 get()		     { static Trampoline singleton;					return singleton; }
+	public:
+		void*							 allocatePlugin(size_t a_handle, size_t a_size);
 	private:
 		void*		SystemAllocatedMemory;
 		size_t		SystemAllocatedLength;
@@ -212,6 +207,7 @@ namespace Trampoline
 		void*		AllocSysAllocAddr;
 	};
 
+	
 	extern Trampoline g_Trampoline;
 }
 #endif

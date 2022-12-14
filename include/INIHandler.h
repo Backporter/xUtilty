@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include "../Third-Party/benhoyt/1.0/INIReader.h"
+#include <stdint.h>
 
 // used to make sure the INI paths are changed when to whatever is needed in the event it's used outside of skyrim, refer to OF4EL for using.
 extern void SetPath(const char** a_log, const char** a_mira, const char** a_data, const char** a_appdata);
@@ -11,54 +11,61 @@ namespace OrbisINIHandler
 	struct ConsoleOptions 
 	{
 		// [General]
-		long		PathType;		// iLocalPathType
-		const char*	Path;			// sLocalPath
+		long		PathType{ 1 };																												// iLocalPathType
+		const char*	Path{ "OSEL/log.txt" };																										// sLocalPath
 
 		// [VideoOut]
-		int		 FlipRate;			// iFlipRate
-		uint32_t AspectRatio;		// iAspectRatio
-		uint32_t Width;				// iWidth
-		uint32_t Height;			// iHeight
-		uint32_t pitchInPixel;		// iPitch
-		uint32_t TilingMode;		// iTilingMode
-		uint32_t PixelFormat;		// iPixelFormat
+		int		 FlipRate{ 0 };																													// iFlipRate
+		int32_t AspectRatio{ -1 };																												// iAspectRatio
+		int32_t Width{ -1 };																													// iWidth
+		int32_t Height{ -1 };																													// iHeight
+		int32_t pitchInPixel{ -1 };																												// iPitch
+		int32_t TilingMode{ -1 };																												// iTilingMode
+		int32_t PixelFormat{ -1 };																												// iPixelFormat
 
 		// [Extras]
-		bool	SpawnCCE;
+		bool	SpawnCCE{ false };																												// bSpawnCCE
 
 		// [CSEL]
-		bool		UseCustomIconURL;
-		const char* Icon;
-		bool		EnableGFxLogger;
-		bool		EnableDebugLogs;
-		bool		EnableVirtualMachineLog;
+		bool		UseCustomIconURL{ false };																									// bUseCustomIcon
+		const char* Icon{ "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png" }; 											// sIcon
+		
 
 		// [Game]
-		uint32_t	RenderTargetTextureWidth;
-		uint32_t	RenderTargetTextureHeight;
+		int32_t		RenderTargetTextureWidth{ 1920 };																							// iRenderTargetTextureWidth
+		int32_t		RenderTargetTextureHeight{ 1080 };																							// iRenderTargetTextureHeight
+		bool        EnableContainerCategorization{ 0 };																							// bEnableContainerCategorization
 
 		// [PSN]
-		bool		BypassPSN;
-		bool		HideWarning;
-		const char* UserID;
+		bool		BypassPSN{ false };																											// bHideWarning
+		bool		HideWarning{ false };																										// bBypassPSN
+		const char* UserID{ "NULL" };																											// sUserID
 
 		// [SaveData]
-		long		SaveUnmountSleep;		// iSaveUnmountSleep
-		bool		AutoDumpSaveData;		//
-		long		SaveDataDumpDirType;	// iSaveDataDumpDirType
-		const char* SaveDataDumpdir;		//
+		bool		CompressSaveData{ false };																									// bCompressSaveData
+		long		SaveUnmountSleep{ 0 };																										// iSaveUnmountSleep
+		bool		AutoDumpSaveData{ false };																									// bAutoDumpSaveData
+		long		SaveDataDumpDirType{3};																										// iSaveDataDumpDirType
+		const char* SaveDataDumpdir{ "CSEL/dump/SaveData/" };																					// sSaveDataDumpDir
+
+
+		// [Debugger]
+		bool		EnableGFxLogger{ true };																									// bEnableGFxLogger
+		bool		EnableVirtualMachineLog{ false };																							// bEnableVirtualMachineLog
+		bool		IsDebugMode{ false };																										// bIsDebugMode
 	};
 
 	class OrbisINIHandler
 	{
 	public:
-		OrbisINIHandler();
-		virtual ~OrbisINIHandler();
+		OrbisINIHandler() : m_path(0) { }
+		~OrbisINIHandler() { }
 
-		virtual bool			ParseINI();
-		virtual ConsoleOptions* GetINIOptions();
-		virtual INIReader*		GetReader();
-		virtual bool			IsVailid();
+		bool			Parse();
+		const char*		GetPath() { return m_path; }
+		INIReader*		GetReader() { return &m_reader; }
+		ConsoleOptions* GetConsoleOptions() { return &m_ConsoleToptions; }
+		ConsoleOptions* GetINIOptions() { return GetConsoleOptions(); }
 
 		static OrbisINIHandler* GetSingleton()
 		{
@@ -66,9 +73,17 @@ namespace OrbisINIHandler
 			return &_OrbisINIHandler;
 		}
 	public:
-		bool		   Parsed;
-		const char*	   INIPath;
-		INIReader	   Reader;
-		ConsoleOptions INIOptions;
+		const char*	   m_path;
+		INIReader	   m_reader;
+		ConsoleOptions m_ConsoleToptions;
 	};
+
+	inline const char* GetConfigOptionPath() { return OrbisINIHandler::GetSingleton()->m_path; }
+
+	inline bool GetConfigOption_UInt32(const char* a_section, const char* a_key, uint32_t& a_dst)
+	{
+		auto& reader = OrbisINIHandler::GetSingleton()->m_reader;
+		a_dst = reader.GetInteger(a_section, a_key, 0);
+		return true;
+	}
 }

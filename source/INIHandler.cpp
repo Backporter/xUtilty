@@ -1,7 +1,6 @@
 #include "../include/FileSystem.h"
 #include "../include/MessageHandler.h"
 #include "../include/INIHandler.h"
-#include "../include/Macro.h"
 
 #include <stdint.h>
 
@@ -10,151 +9,83 @@ namespace OrbisINIHandler
 	static const char* LogPath     = "OSEL/log.txt";
 	static const char* MiraPath    = "/_mira/CSEL_Loader.ini";
 	static const char* DataPath    = "/data/CSEL/CSEL_Loader.ini";
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 	static const char* AppDataPath = "/app0/data/CSEL/CSEL_Loader.ini";
-#elif defined(PLATFORM_NX) || defined(__SWITCH__)
-	static const char* AppDataPath = "/data/CSEL/CSEL_Loader.ini";
-#endif
 
-	OrbisINIHandler::OrbisINIHandler()
-		:INIPath(nullptr)
-	{
-	}
-
-	OrbisINIHandler::~OrbisINIHandler()
-	{
-		// 
-	}
-
-	bool OrbisINIHandler::ParseINI()
+	bool OrbisINIHandler::Parse()
 	{
 		SetPath(&LogPath, &MiraPath, &DataPath, &AppDataPath);
-
-		INIPath = AppDataPath;
+		m_path = AppDataPath;
 
 		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, AppDataPath, false))
 		{
-			INIPath = AppDataPath;
+			m_path = AppDataPath;
 		}
 
 		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, DataPath, false))
 		{
-			INIPath = DataPath;
+			m_path = DataPath;
 		}
 
 		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, MiraPath, false))
 		{
-			INIPath = MiraPath;
+			m_path = MiraPath;
 		}
 
-		MessageHandler::Notify("Reading INI from %s", INIPath);
-		this->Reader = INIReader(INIPath);
-		if (this->Reader.ParseError() < 0)
-		{
-			MessageHandler::Notify("Failed to parse [%s]", INIPath);
-			this->Parsed = false;
+		MessageHandler::KernelPrintOut("Reading INI from %s", m_path);
 
+		m_reader = INIReader(m_path);
+		if (!m_reader.ParseError())
+		{
 			// General
-			this->INIOptions.PathType = 1;
-			this->INIOptions.Path = LogPath;
+			m_ConsoleToptions.PathType						= m_reader.GetInteger("General", "iLocalPathType", 1);
+			m_ConsoleToptions.Path							= strdup(m_reader.Get("General", "sLocalPath", "OSEL/log.txt").c_str());
 
 			// VideoOut
-			this->INIOptions.FlipRate = 0;
-			this->INIOptions.AspectRatio = -1;
-			this->INIOptions.Width = -1;
-			this->INIOptions.Height = -1;
-			this->INIOptions.pitchInPixel = -1;
-			this->INIOptions.TilingMode = -1;
-			this->INIOptions.PixelFormat = -1;
+			m_ConsoleToptions.FlipRate						= m_reader.GetInteger("VideoOut", "iFlipRate", 0);
+			m_ConsoleToptions.AspectRatio					= m_reader.GetInteger("VideoOut", "iAspectRatio", -1);
+			m_ConsoleToptions.Width							= m_reader.GetInteger("VideoOut", "iWidth", -1);
+			m_ConsoleToptions.Height						= m_reader.GetInteger("VideoOut", "iHeight", -1);
+			m_ConsoleToptions.pitchInPixel					= m_reader.GetInteger("VideoOut", "iPitch", -1);
+			m_ConsoleToptions.TilingMode					= m_reader.GetInteger("VideoOut", "iTilingMode", -1);
+			m_ConsoleToptions.PixelFormat					= m_reader.GetInteger("VideoOut", "iPixelFormat", -1);
 
 			// Extras
-			this->INIOptions.SpawnCCE = false;
+			m_ConsoleToptions.SpawnCCE						= m_reader.GetBoolean("Extras", "bSpawnCCE", false);
 
 			// CSEL
-			this->INIOptions.UseCustomIconURL = false;
-			this->INIOptions.Icon = "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png";
-			this->INIOptions.EnableGFxLogger = true;
-			this->INIOptions.EnableDebugLogs = true;
-			this->INIOptions.EnableVirtualMachineLog = true;
+			m_ConsoleToptions.UseCustomIconURL				= m_reader.GetBoolean("CSEL", "bUseCustomIcon", false);
+			m_ConsoleToptions.Icon							= strdup(m_reader.Get("CSEL", "sIcon", "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png").c_str());
 
 			// Game
-			this->INIOptions.RenderTargetTextureWidth = 1920;
-			this->INIOptions.RenderTargetTextureHeight = 1080;
-
-			// PSN
-			this->INIOptions.BypassPSN = false;
-			this->INIOptions.HideWarning = false;
-			this->INIOptions.UserID	   = "NULL";
+			m_ConsoleToptions.RenderTargetTextureWidth      = m_reader.GetInteger("Game", "iRenderTargetTextureWidth", 1920);
+			m_ConsoleToptions.RenderTargetTextureHeight     = m_reader.GetInteger("Game", "iRenderTargetTextureHeight", 1080);
+			m_ConsoleToptions.EnableContainerCategorization = m_reader.GetInteger("Game", "bEnableContainerCategorization", 0);
 			
+			// PSN
+			m_ConsoleToptions.BypassPSN						= m_reader.GetBoolean("PSN", "bBypassPSN", false);
+			m_ConsoleToptions.HideWarning					= m_reader.GetBoolean("PSN", "bHideWarning", false);
+			m_ConsoleToptions.UserID						= strdup(m_reader.Get("PSN", "sUserID", "NULL").c_str());
+
 			// SaveData
-			this->INIOptions.SaveUnmountSleep = 1;
-			this->INIOptions.AutoDumpSaveData = false;
-			this->INIOptions.SaveDataDumpDirType = OrbisFileSystem::USB1;
-			this->INIOptions.SaveDataDumpdir = "CSEL/dump/SaveData/";
+			m_ConsoleToptions.CompressSaveData				= m_reader.GetBoolean("SaveData", "bCompressSaveData", false);
+			m_ConsoleToptions.SaveUnmountSleep				= m_reader.GetInteger("SaveData", "iSaveUnmountSleep", 0);
+			m_ConsoleToptions.AutoDumpSaveData				= m_reader.GetBoolean("SaveData", "bAutoDumpSaveData", true);
+			m_ConsoleToptions.SaveDataDumpDirType			= m_reader.GetInteger("SaveData", "iSaveDataDumpDirType", OrbisFileSystem::USB1);
+			m_ConsoleToptions.SaveDataDumpdir				= strdup(m_reader.Get("SaveData", "sSaveDataDumpDir", "CSEL/dump/SaveData/").c_str());
 
-			return false;
+			// Debugger
+			m_ConsoleToptions.EnableGFxLogger				= m_reader.GetBoolean("Debugger",	"bEnableGFxLogger",			true);
+			m_ConsoleToptions.EnableVirtualMachineLog		= m_reader.GetBoolean("Debugger",	"bEnableVirtualMachineLog", false);
+			m_ConsoleToptions.IsDebugMode					= m_reader.GetBoolean("Debugger",	"bIsDebugMode",				false);
+
+			if (m_ConsoleToptions.BypassPSN && !m_ConsoleToptions.HideWarning)
+			{
+				MessageHandler::Notify("Skyrim Mods/Creation Club PSN bypasser is active, I take no responsabilty for anything that occours while this is active.");
+			}
+
+			return true;
 		}
 
-		// General
-		INIOptions.PathType				     = this->Reader.GetInteger("General", "iLocalPathType", 1);
-		INIOptions.Path					     = strdup(this->Reader.Get("General", "sLocalPath", "OSEL/log.txt").c_str());
-
-		// VideoOut
-		INIOptions.FlipRate				     = this->Reader.GetInteger("VideoOut", "iFlipRate", 0);
-		INIOptions.AspectRatio			     = this->Reader.GetInteger("VideoOut", "iAspectRatio", -1);
-		INIOptions.Width				     = this->Reader.GetInteger("VideoOut", "iWidth", -1);
-		INIOptions.Height				     = this->Reader.GetInteger("VideoOut", "iHeight", -1);
-		INIOptions.pitchInPixel			     = this->Reader.GetInteger("VideoOut", "iPitch", -1);
-		INIOptions.TilingMode			     = this->Reader.GetInteger("VideoOut", "iTilingMode", -1);
-		INIOptions.PixelFormat			     = this->Reader.GetInteger("VideoOut", "iPixelFormat", -1);
-
-		// Extras
-		INIOptions.SpawnCCE				     = this->Reader.GetBoolean("Extras",  "bSpawnCCE", false);
-
-		// CSEL
-		INIOptions.UseCustomIconURL          = this->Reader.GetBoolean("CSEL", "bUseCustomIcon", false);
-		INIOptions.Icon					     = strdup(this->Reader.Get("CSEL", "sIcon", "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png").c_str());
-		INIOptions.EnableGFxLogger		     = this->Reader.GetBoolean("CSEL", "bEnableGFxLogger", true);
-		INIOptions.EnableDebugLogs		     = this->Reader.GetBoolean("CSEL", "bEnableDebugLogs", true);
-		INIOptions.EnableVirtualMachineLog   = this->Reader.GetBoolean("CSEL", "bEnableVirtualMachineLog", true);
-
-		// Game
-		INIOptions.RenderTargetTextureWidth  = this->Reader.GetInteger("Game", "iRenderTargetTextureWidth", 1920);
-		INIOptions.RenderTargetTextureHeight = this->Reader.GetInteger("Game", "iRenderTargetTextureHeight", 1080);
-
-		// PSN
-		INIOptions.BypassPSN				 = this->Reader.GetBoolean("PSN", "bBypassPSN", false);
-		INIOptions.HideWarning				 = this->Reader.GetBoolean("PSN", "bHideWarning", false);
-		INIOptions.UserID					 = strdup(this->Reader.Get("PSN", "sUserID", "NULL").c_str());
-
-		// SaveData
-		INIOptions.SaveUnmountSleep			 = this->Reader.GetInteger("SaveData", "iSaveUnmountSleep", 0);
-		INIOptions.AutoDumpSaveData			 = this->Reader.GetBoolean("SaveData", "bAutoDumpSaveData", true);
-		INIOptions.SaveDataDumpDirType		 = this->Reader.GetInteger("SaveData", "iSaveDataDumpDirType", OrbisFileSystem::USB1);
-		INIOptions.SaveDataDumpdir			 = strdup(this->Reader.Get("SaveData", "sSaveDataDumpDir", "CSEL/dump/SaveData/").c_str());
-
-		if (this->INIOptions.BypassPSN && !this->INIOptions.HideWarning)
-		{
-			MessageHandler::Notify("Skyrim Mods/Creation Club PSN bypasser is active, I take no responsabilty for anything that occours while this is active.");
-		}
-
-		this->Parsed = true;
-		return true;
-	}
-
-	INIReader* OrbisINIHandler::GetReader()
-	{
-		return &Reader;
-	}
-
-	ConsoleOptions* OrbisINIHandler::GetINIOptions()
-	{
-		return &INIOptions;
-	}
-
-	bool OrbisINIHandler::IsVailid()
-	{
-		return this->Parsed;
+		return false;
 	}
 }

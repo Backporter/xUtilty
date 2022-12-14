@@ -10,9 +10,11 @@
 #include <orbis/libkernel.h>
 #endif
 
+#include <unistd.h>
+
 namespace OrbisOffsetManger
 {
-	void OffsetManger::Initialize()
+	void	  OffsetManger::Initialize()
 	{
 		char path[260] { 0 };
 		const char* TITILE = NULL;
@@ -29,165 +31,111 @@ namespace OrbisOffsetManger
 			APP_VER = "01.09";
 #endif
 
-		// check if /app0/data/%s-%s.offset exists
-		OrbisFileSystem::CreateFullPath(path, OrbisFileSystem::App, "data/CSEL/%s-%s.offset", TITILE, APP_VER);
-		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, path, false))
-		{
-			OffsetFIle = strdup(path);
-			return;
-		}
-		
-		// check if /data/data/%s-%s.offset exists
-		OrbisFileSystem::CreateFullPath(path, OrbisFileSystem::Data, "data/CSEL/%s-%s.offset", TITILE, APP_VER);
-		if (OrbisFileSystem::PathExists(OrbisFileSystem::Full, path, false))
-		{
-			OffsetFIle = strdup(path);
-			return;
-		}
-
-		MessageHandler::KernelPrintOut("Failed to find OrbisOffsetManger's offset list (%s)", path);
-		OffsetFIle = NULL;
-		return;
+		OrbisFileSystem::CreateFullPath(path, OrbisFileSystem::App, "data/DB/%s-%s.offset", TITILE, APP_VER);
+		m_path = strdup(path);
 	}
 
-	bool      OffsetManger::Parse()
+	bool	  OffsetManger::Parse()
 	{
-	 	OffsetDataBase::InternalOffsetStructure entry{ 0 };
+		int64_t s_ret = 0;
+		V1		s_entryv1{ 0 };
+		V2		s_entryv2{ 0 };
+		
+		if (m_path)
+		{
+			if ((m_fd = open(m_path, 0, 0)) >= 0)
+			{
+				if ((s_ret = read(m_fd, &m_header, sizeof(m_header))) > 0)
+				{
+					if (m_header.Magic == GetPlatformID())
+					{
+						if (!strcasecmp(m_header.Platform, GetPlatformStringID()))
+						{
+							if (m_header.Count > 0)
+							{
+								if (m_header.Type == DBType::V1)
+								{
+									for (int i = 0; i < m_header.Count; i++)
+									{
+										if (read(m_fd, &s_entryv1, sizeof(s_entryv1)) > 0)
+											m_entiresv1.push_back(s_entryv1);
+									}
 
-		if (!OffsetFIle)
-			return false;
+									m_flags |= Flags::kV1;
+									close(m_fd);
+									g_useDB = true;
+									return true;
+								}
+								else if (m_header.Type == DBType::V2)
+								{
+									for (int i = 0; i < m_header.Count; i++)
+									{
+										if (read(m_fd, &s_entryv2, sizeof(s_entryv2)) > 0)
+											m_entiresv2.push_back(s_entryv2);
+									}
 
-	 	if ((this->FD = open(OffsetFIle, 0, 0)) < 0)
-	 	{
-			goto error;
-	 	}
-	 
-	 	if ((this->RET = read(this->FD, &Header, sizeof(OffsetDataBase::Header))) <= 0)
-	 	{
-			goto error;
+									m_flags |= Flags::kV2;
+									close(m_fd);
+									g_useDB = true;
+									return true;
+								}
+							}
+							else
+							{
+								g_useDB = false;
+								MessageHandler::KernelPrintOut("Entry count is empty");
+							}
+						}
+						else
+						{
+							g_useDB = false;
+							MessageHandler::KernelPrintOut("Header Platform-Mismatch");
+						}
+					}
+					else
+					{
+						g_useDB = false;
+						MessageHandler::KernelPrintOut("Header Magic-Mismatch");
+					}
+				}
+				else
+				{
+					g_useDB = false;
+					MessageHandler::KernelPrintOut("Failed to read header for 0x%lx", s_ret);
+				}
+			}
+			else
+			{
+				g_useDB = false;
+				MessageHandler::KernelPrintOut("Failed to open db(%s/%d)", m_path, m_fd);
+			}
 		}
-	 
-	 	if (Header.Magic != GetPlatformID())
-	 	{
-			goto error;
-	 	}
-	 
-	 	if (strcasecmp(Header.Platform, GetPlatformStringID()))
-	 	{
-			goto error;
-	 	}
-	 
-	 	if (Header.Count == 0)
-	 	{
-			goto error;
-	 	}
-	 
-	 	for (int i = 0; i < Header.Count; i++)
-	 	{
-	 		if ((this->RET = read(this->FD, &entry, sizeof(OffsetDataBase::InternalOffsetStructure))) <= 0)
-	 		{
-	 			MessageHandler::KernelPrintOut("Failed to read entry for 0x%lx(error id %d/%s)", this->RET, errno, strerror(errno));
-				goto error;
-	 		}
 
-			this->Entries.push_back(entry);
-	 	}
-
-		goto successful;
-
-	successful:
-		close(this->FD);
-		return true;
-		IsParsed = true;
-	error:
-		close(this->FD);
+		close(m_fd);
 		return false;
-		IsParsed = true;
 	}
 
-	uint64_t  OffsetManger::GetOffset(const char* ID)
+	uintptr_t OffsetManger::GetOffset(uint32_t a_crc32)
 	{
-		OffsetDataBase::InternalOffsetStructure entry{ 0 };
-
-		if (!OffsetFIle)
+		/* is V1?Get V1 */
+		if ((m_flags & Flags::kV1) == 0)
 		{
-			goto safeexit;
-		}
-
-		if (!ID)
-		{
-			MessageHandler::KernelPrintOut("ID is invailed");
-			goto safeexit;
-		}
-
-		if ((this->FD = open(OffsetFIle, 0, 0)) < 0)
-		{
-			MessageHandler::KernelPrintOut("Failed to open %s for 0x%lx(ID: %s)", OffsetFIle, this->FD, ID);
-			goto safeexit;
-		}
-
-		if (Header.Magic != GetPlatformID())
-		{
-			MessageHandler::KernelPrintOut("Invaild magic got 0x%lx(ID: %s)", Header.Magic, ID);
-			goto safeexit;
-		}
-
-		if (strcasecmp(Header.Platform, "ORBIS"))
-		{
-			MessageHandler::KernelPrintOut("Invaild platform got %s not ORBIS(ID: %s)", Header.Platform, ID);
-			goto safeexit;
-		}
-		
-		if (Header.Count == 0)
-		{
-			MessageHandler::KernelPrintOut("Invaild entry count(ID: %s)", ID);
-			goto safeexit;
-		}
-
-		for (int i = 0; i < Header.Count; i++)
-		{
-			if ((this->RET = read(this->FD, &entry, sizeof(entry))) <= 0)
+			for (auto& item : m_entiresv1)
 			{
-				MessageHandler::KernelPrintOut("Failed to read entry for 0x%lx(ID: %s, error id %d/%s)", this->RET, ID, errno, strerror(errno));
-				goto safeexit;
-			}
-
-			if (strncasecmp(entry.ID, ID, 0x28) == 0)
-			{
-				MessageHandler::KernelPrintOut("Found %s in %s with offset of 0x%lx", ID, OffsetFIle, entry.offset);
-				lseek(this->FD, 0, 0);
-				close(this->FD);
-				return entry.offset;
+				if (CryptoHandler::GetCRC32(item.ID, 0) == a_crc32)
+					return item.offset;
 			}
 		}
 
-		MessageHandler::KernelPrintOut("Failed to find ID in database(ID: %s, Count: %d, Version: %d)", ID, Header.Count, Header.Version);
-		goto safeexit;
-
-	safeexit:
-		lseek(this->FD, 0, 0);
-		close(this->FD);
-		return 0;
-	}
-
-	uintptr_t OffsetManger::_GetOffset(const char* ID)
-	{
-		auto EntriesSize = this->Entries.size();
-		if (!IsParsed && EntriesSize <= 0)
+		else if ((m_flags & Flags::kV2) == 0)
 		{
-			if (!this->Parse())
-				return 0;
-		}
-
-		for (size_t i = 0; i < EntriesSize; i++)
-		{
-			auto entry = this->Entries[i];
-			if (!strcasecmp(entry.ID, ID))
+			for (auto& item : m_entiresv2)
 			{
-				return entry.offset;
+				if (item.ID == a_crc32)
+					return item.offset;
 			}
 		}
 
-		return 0;
+		return -1;
 	}
 }

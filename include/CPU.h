@@ -1,12 +1,6 @@
 #pragma once
-#include "SystemWrapper.h"
 
-#if defined(__ORBIS__)
-#include <kernel.h>
-#include <razorcpu.h>
-#elif defined (__OPENORBIS__)
-#include <orbis/libkernel.h>
-#endif
+#include <stdint.h>
 
 namespace CPU
 {

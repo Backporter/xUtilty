@@ -229,7 +229,7 @@ namespace OrbisDialogueManger
 		}
 
 		if (ImeDialogResult.endstatus != 0) { return -1; }
-		OrbisSystemWrapper::wcstombs(buf, (const wchar_t_t*)this->ImeDialogParam.inputTextBuffer, 2048);
+		SystemWrapper::wcstombs(buf, (const wchar_t_t*)this->ImeDialogParam.inputTextBuffer, 2048);
 		
 		free(this->ImeDialogParam.inputTextBuffer);
 		this->ImeDialogParam.inputTextBuffer = nullptr;

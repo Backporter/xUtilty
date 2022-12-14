@@ -5,35 +5,24 @@
 #include "../include/SystemWrapper.h"
 #include "../include/INIHandler.h"
 
+#include <time.h>
 namespace MessageHandler
 {
 	void LocalPrint(const char * FMT, ...)
 	{
-		size_t length;
 		char buffer[1024];
 		va_list args;
 		va_start(args, FMT);
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (OrbisSystemWrapper::vsprintf)
-			length = OrbisSystemWrapper::vsprintf(buffer, FMT, args);
-		else
-#endif
-			length = vsprintf(buffer, FMT, args);
+		size_t length = SystemWrapper::vsprintf(buffer, FMT, args);
 		va_end(args);
 	}
 
 	void Notify(const char* MessageFMT, ...)
 	{
-		size_t length;
 		NotifyBuffer Buffer;
 		va_list args;
 		va_start(args, MessageFMT);
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (OrbisSystemWrapper::vsprintf)
-			length = OrbisSystemWrapper::vsprintf(Buffer.Message, MessageFMT, args);
-		else
-#endif
-			length = vsprintf(Buffer.Message, MessageFMT, args);
+		size_t length = SystemWrapper::vsprintf(Buffer.Message, MessageFMT, args);
 		va_end(args);
 
 		Buffer.Type = NotifyType::NotificationRequest;
@@ -52,14 +41,7 @@ namespace MessageHandler
 		}
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-
-		if (!OrbisSystemWrapper::sceKernelSendNotificationRequest)
-		{
-			LocalPrint("OrbisSystemWrapper::sceKernelSendNotificationRequest Is not dlysm'ed redirecting call to prevent crash");
-			return;
-		}
-
-		OrbisSystemWrapper::sceKernelSendNotificationRequest(0, (char*)&Buffer, 3120, 0);
+		SystemWrapper::sceKernelSendNotificationRequest(0, (char*)&Buffer, 3120, 0);
 		KernelPrintOut(Buffer.Message, "\n");
 
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
@@ -69,27 +51,27 @@ namespace MessageHandler
 
 	void KernelPrintOut(const char* MessageFMT, ...)
 	{
-		size_t length;
+		int64_t s_time;
 		char MessageBuf[1024];
+
+		time(&s_time);
+		auto time = localtime(&s_time);
+		std::strftime(MessageBuf, 1024, "[%m/%d/%Y - %I:%M:%S%p] ", time);
+		
+		// stub the size.
+		auto timelen = strlen(MessageBuf);
+		
 		va_list args;
 		va_start(args, MessageFMT);
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (OrbisSystemWrapper::vsprintf)
-			length = OrbisSystemWrapper::vsprintf(MessageBuf, MessageFMT, args);
-		else
-#endif
-			length = vsprintf(MessageBuf, MessageFMT, args);
+		size_t  length = SystemWrapper::vsprintf(&MessageBuf[timelen], MessageFMT, args);
 		va_end(args);
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (!OrbisSystemWrapper::sceKernelDebugOutText)
-		{
-			LocalPrint("OrbisSystemWrapper::sceKernelDebugOutText Is not dlysm'ed redirecting call to prevent crash");
-			return;
-		}
+		// copy buf
 
-		OrbisSystemWrapper::sceKernelDebugOutText(0, MessageBuf);
-		OrbisSystemWrapper::sceKernelDebugOutText(0, "\n");
+
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		SystemWrapper::sceKernelDebugOutText(0, MessageBuf);
+		SystemWrapper::sceKernelDebugOutText(0, "\n");
 
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
 		svcOutputDebugString(MessageBuf, length);

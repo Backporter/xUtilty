@@ -1,14 +1,20 @@
 #include "../include/FramerateTracker.h"
 
+#if defined(__ORBIS__)
+#include <kernel.h>
+#include <gnm.h>
+#include <gnmx.h>
+#include <video_out.h>
+#include <gnf.h>
+#elif defined(__OPENORBIS__)
+#include <orbis/libkernel.h>
+#endif
+
 namespace FrameUtil
 {
-	FrameUtil::Tracker::Tracker() :
-		FrameTime(0), FrameDelta(0), FrameDeltaTime(0), FrameRate(0)
-	{
+	FrameUtil::Tracker::Tracker() : FrameTime(0), FrameDelta(0), FrameDeltaTime(0), FrameRate(0) { }
 
-	}
-
-	FrameUtil::Tracker::~Tracker(){}
+	FrameUtil::Tracker::~Tracker() { }
 
 	void FrameUtil::Tracker::Update()
 	{

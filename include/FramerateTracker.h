@@ -1,15 +1,5 @@
 #pragma once
 
-#if defined(__ORBIS__)
-#include <kernel.h>
-#include <gnm.h>
-#include <gnmx.h>
-#include <video_out.h>
-#include <gnf.h>
-#elif defined(__OPENORBIS__)
-#include <orbis/libkernel.h>
-#endif
-
 namespace FrameUtil
 {
 	class Tracker

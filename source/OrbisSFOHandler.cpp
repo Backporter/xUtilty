@@ -35,7 +35,7 @@ namespace OrbisSFOHandler
 	bool sfo_parser::ParseSFO(bool FixJailedState, char* Path)
 	{
 		if (FixJailedState)
-			OrbisSystemWrapper::Jailbreak();
+			SystemWrapper::Jailbreak();
 
 		FILE* FD;
 		sfo::Header Header;
@@ -101,17 +101,17 @@ namespace OrbisSFOHandler
 		Entry.clear();
 		
 		if (FixJailedState)
-			OrbisSystemWrapper::Jail();
+			SystemWrapper::Jail();
 
 		return true;
 	}
 
 	void sfo_parser::ParseCurrentProcessSFO()
 	{
-		auto dirs = OrbisFileSystem::GetDirectoryEntries("/mnt/sandbox/pfsmnt/", 7);
+		auto dirs = OrbisFileSystem::GetDirectoryEntries("/mnt/sandbox/pfsmnt/", NULL, false, 7, false);
 		for (auto dir : dirs)
 		{
-			auto ID = dir.FileName.substr(dir.FileName.size() - 5, 5);
+			auto ID = dir.m_filename.substr(dir.m_filename.size() - 5, 5);
 
 			if (strcasecmp(ID.c_str(), "-app0") != 0)
 			{
@@ -119,7 +119,7 @@ namespace OrbisSFOHandler
 			}
 
 			char path[PATH_MAX];
-			sprintf(path, "/system_data/priv/appmeta/%s/param.sfo", dir.FileName.substr(0, 9).c_str());
+			sprintf(path, "/system_data/priv/appmeta/%s/param.sfo", dir.m_filename.substr(0, 9).c_str());
 
 			if (this->ParseSFO(true, path))
 			{

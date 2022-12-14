@@ -1,8 +1,10 @@
 #pragma once
+#include "../include/FileSystem.h"
 
 #if defined(__ORBIS__)
 #include <kernel.h>
 #include <net.h>
+#include <libnetctl.h>
 #elif defined(__OPENORBIS__)
 #include <orbis/Net.h>
 #include <orbis/libkernel.h>
@@ -25,6 +27,10 @@ typedef sockaddr_in  SceNetSockaddrIn;
 #include <stdarg.h>
 #include <inttypes.h>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 #ifndef _MESSAGE
 #define _MESSAGE(fmt) Log::Log::GetSingleton()->Write(fmt);
 #endif
@@ -33,83 +39,57 @@ typedef sockaddr_in  SceNetSockaddrIn;
 #define _MESSAGE_VA(fmt, ...) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__);
 #endif
 
-#ifndef _MESSAGELAST
-#define _MESSAGELAST(fmt) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__); \
-Log::Log::GetSingleton()->Write(fmt);
-#endif
-
-#ifndef _MESSAGELAST_VA
-#define _MESSAGELAST_VA(fmt, ...) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__); \
-Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__);
-#endif
-
 namespace Log
 {
+	// kManagedPath means we cloned the string.
+	enum kFlags
+	{
+		kNone = 0,
+		kManagedPath = 1 << 0,
+		kNetworkMode = 1 << 1,
+	};
+
+	enum klogLevel
+	{
+		Normal,
+		Warning,
+		Error,
+		Critical,
+		Fatal,
+	};
+
 	class Log
 	{
 	public:
 		Log();
 		virtual ~Log();
-
-		// Open's the log with a full path, exactly like OpenRelitive minus the ID
-		virtual bool Open(const char* path);
-
-		// This will open the log with the Relitive ID + path, ex OpenRelitive(OrbisFileSystem::Download, "OCEL/log.txt"); = "/download0/OCEL/log.txt"
-		// ID matches the ID in OrbisFileSystem::XXXX
-		virtual bool OpenRelitive(int ID, const char* path);
-
-		// closes log
+	public:
+		virtual bool Open(char* a_path);
+		virtual bool Connect(char* a_ip);
+		virtual bool OpenRelitive(int a_id, char* a_path);
 		virtual bool Close();
-
-		// Confirms the file descriptor is still vaild
 		virtual bool Vaild();
-
-		// writes a message to the log
 		virtual bool Write(const char* fmt, ...);
-
-		// writes a message to the log
 		virtual bool WriteVA(uint32_t type, const char* fmt, va_list list);
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		// network version of this->Open(), this network stuff, so it's cleaner to do it in a different method
-		// BEWARE, blocking function.... 
-		virtual bool Connect(const char* IP);
-
-		// network version of this->Close(), network stuff is seperated for cleaner code
-		// BEWARE, blocking function.... 
-		virtual bool Disconnect();
-
-		// network version of this->write(), network stuff is seperated for cleaner code... use this->Write as it works too.
-		// BEWARE, blocking function.... 
+		virtual bool WriteLevel(int a_logLevel, const char* a_fmt, ...);
 		virtual bool Send(const char* MessageFMT, ...);
-#endif
-
-		// Singleton implementation for a single class
-		static Log* GetSingleton()
-		{
-			static Log _OrbisLog;
-			return &_OrbisLog;
+	public:
+		static Log* GetSingleton() 
+		{ 
+			static Log singleton; 
+			return &singleton;
 		}
 
-		// debug stuff
-		// Singleton implementation for a single class
-		static Log* GetMiraLog()
+		static Log* MiscLog()
 		{
-			static Log _OrbisLog;
-			return &_OrbisLog;
+			static Log log;
+			return &log;
 		}
-
 	private:
-		// file descriptor when a local file is used, socket when the network is used
-		int			FD;
-		uint64_t	ret;
-		const char* LogPath;
-
-		bool		UseNet;
-		int			opt;
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		SceNetSockaddrIn NetworkServer;
-#endif
+		const char*  m_path;
+		int			 m_fd;
+		int			 m_flags;
+		int			 opt;
+		sockaddr_in  NetworkServer;
 	};
 }

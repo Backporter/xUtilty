@@ -2,90 +2,62 @@
 #include "../include/MessageHandler.h"
 #include "../include/Macro.h"
 #include "../include/SafeTypes.h"
-
 #include "../include/SystemWrapper.h"
+
+#include <unistd.h>
 
 namespace FIleHandler
 {
-	FIleHandler::FIleHandler(char* path, int Type, int flags) :
-		FDPos(0)
+	FIleHandler::FIleHandler(char* a_path, int a_flags, int a_openflags) : 
+		m_flags(a_flags), m_filepath(0), m_fd(0), m_ret(0), m_fdpos(0)
 	{
-		if (!path)
+		char buffer[260]{ 0 };
+		
+		if (!a_path)
 			return;
 
-		this->IsCopy = false;
-		this->FilePath = path;
-		this->FileType = Type;
-
-		if ((this->FileDescriptor = open(FilePath, flags, 0000777)) < 0)
-		{
-			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx(%s)", __FUNCTION__, FilePath, this->FileDescriptor, strerror(errno));
-			return;
-		}
-
-		if ((this->RET = fstat(this->FileDescriptor, &this->FileStats)) != 0)
-		{
-			MessageHandler::KernelPrintOut("%s failed to gather file stats for 0x%lx", __FUNCTION__, this->RET);
-			return;
-		}
-	}
-
-	//
-	FIleHandler::FIleHandler(char* relpath, int Type, int flags, bool abs) :
-		FDPos(0)
-	{
-		if (!relpath)
-			return;
-
-		char path[260]{ 0 };
-		if (abs)
-		{
-			sprintf(path, "%s", relpath);
-		}
+		if ((a_flags & kTypeFlags::kIsConstPath) != 0)
+			m_filepath = a_path;
 		else
 		{
-			sprintf(path, COMBINE(ROOT, "%s"), relpath);
+			if ((m_flags & kTypeFlags::kIsAbsolutePath) != 0)
+				sprintf(buffer, "%s", a_path);
+			else if ((m_flags & kTypeFlags::kIsRelativePath) != 0)
+				sprintf(buffer, COMBINE(ROOT, "%s"), a_path);
+
+			m_filepath = strdup(buffer);
 		}
 
-		this->IsCopy = true;
-		this->FilePath = strdup(path);
-		this->FileType = Type;
-
-		if ((this->FileDescriptor = open(FilePath, flags, 0000777)) < 0)
+		if ((m_fd = open(m_filepath, a_openflags, 0000777)) < 0)
 		{
-			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx(%s)", __FUNCTION__, FilePath, this->FileDescriptor, strerror(errno));
+			MessageHandler::KernelPrintOut("%s Failed to open %s for 0x%lx(%s)", __FUNCTION__, m_filepath, m_fd, strerror(errno));
 			return;
 		}
 
-		if ((this->RET = fstat(this->FileDescriptor, &this->FileStats)) != 0)
+		if ((m_ret = fstat(m_fd, &m_filestats)) != 0)
 		{
-			MessageHandler::KernelPrintOut("%s failed to gather file stats for 0x%lx", __FUNCTION__, this->RET);
+			MessageHandler::KernelPrintOut("%s failed to gather file stats for 0x%lx", __FUNCTION__, m_ret);
 			return;
 		}
 	}
 
 	FIleHandler::~FIleHandler()
 	{
-		if (this->IsCopy)
-		{
-			free(this->FilePath);
-		}
+		if ((m_ret = close(m_fd)) != 0)
+			MessageHandler::KernelPrintOut("%s Failed to close file(%d/%s) for 0x%lx(%s)", __FUNCTION__, m_fd, m_filepath, m_ret, strerror(errno));
 
-		if ((this->RET = close(this->FileDescriptor)) != 0)
-		{
-			MessageHandler::KernelPrintOut("%s Failed to close file for 0x%lx(%s)", __FUNCTION__, this->RET, strerror(errno));
-			return;
-		}
+		if ((m_flags & kTypeFlags::kIsConstPath) == 0)
+			free((void*)m_filepath);
 	}
 
 	bool	 FIleHandler::IsDescriptorVailed()
 	{
-		return (this->FileDescriptor > 0) ? lseek(this->FileDescriptor, 0, 1) == 0 : false;
+		return (m_fd > 0) ? lseek(m_fd, 0, 1) == 0 : false;
 	}
 
 	bool	 FIleHandler::IsStreamVaild()
 	{
-		return this->FDPos < this->FileStats.st_size;
+		return m_fdpos < m_filestats.st_size;
 	}
 
 	bool	 FIleHandler::Rewind(uint64_t count)
@@ -93,20 +65,20 @@ namespace FIleHandler
 		uint64_t negcount = count - (count * 2);
 
 		// invalid file
-		if (!this->FileDescriptor)
+		if (!m_fd)
 			return false;
 		
 		// prevent a underflow
-		if (this->FDPos == 0)
+		if (m_fdpos == 0)
 			return false;
 
 		// underflow
-		if ((this->FDPos - count) < 0)
+		if ((m_fdpos - count) < 0)
 			return false;
 
-		if ((this->RET = lseek(this->FileDescriptor, negcount, 1)) >= 0)
+		if ((m_ret = lseek(m_fd, negcount, 1)) >= 0)
 		{
-			this->FDPos -= negcount;
+			m_fdpos -= negcount;
 			return true;
 		}
 
@@ -116,20 +88,20 @@ namespace FIleHandler
 	bool	 FIleHandler::Skip(uint64_t count)
 	{
 		// invalid file
-		if (!this->FileDescriptor)
+		if (!m_fd)
 			return false;
 
 		// prevent a overflow
-		if (this->FDPos == this->FileStats.st_size)
+		if (m_fdpos == m_filestats.st_size)
 			return false;
 
 		// overflow
-		if ((this->FDPos + count) < this->FileStats.st_size)
+		if ((m_fdpos + count) < m_filestats.st_size)
 			return false;
 
-		if ((this->RET = lseek(this->FileDescriptor, count, 1)) >= 0)
+		if ((m_ret = lseek(m_fd, count, 1)) >= 0)
 		{
-			this->FDPos += count;
+			m_fdpos += count;
 			return true;
 		}
 
@@ -138,15 +110,15 @@ namespace FIleHandler
 
 	uint64_t FIleHandler::ReadBytes(void* dst, size_t dstLength)
 	{
-		if (!this->FileDescriptor)
+		if (!m_fd)
 			return -1;
 
-		if (this->FDPos >= this->FileStats.st_size)
+		if (m_fdpos >= m_filestats.st_size)
 			return -1;
 
-		if ((this->RET = read(this->FileDescriptor, dst, dstLength)) > 0)
+		if ((m_ret = read(m_fd, dst, dstLength)) > 0)
 		{
-			this->FDPos += dstLength;
+			m_fdpos += dstLength;
 			return dstLength;
 		}
 		
@@ -155,16 +127,16 @@ namespace FIleHandler
 
 	uint64_t FIleHandler::WriteBytes(void* src, size_t srcLength)
 	{
-		if (!this->FileDescriptor)
+		if (!m_fd)
 			return -1;
 
-		if ((this->RET = write(this->FileDescriptor, src, srcLength)) > 0)
+		if ((m_ret = write(m_fd, src, srcLength)) > 0)
 		{
-			this->FDPos += srcLength;
+			m_fdpos += srcLength;
 			return srcLength;
 		}
 
-		MessageHandler::KernelPrintOut("%s failed with 0x%lx(%s)", __FUNCTION__, this->RET, strerror(errno));
+		MessageHandler::KernelPrintOut("%s failed with 0x%lx(%s)", __FUNCTION__, m_ret, strerror(errno));
 		return -1;
 	}
 
@@ -224,9 +196,9 @@ namespace FIleHandler
 	uint64_t FIleHandler::ReadString(char* dst, int(*_fn)(int), uint64_t len, char endl, char endl2)
 	{
 		// UTF-16 specific reader... wchar_t...
-		if (this->FileType == UTF16)
+		if ((m_flags & kTypeFlags::kUTF16) != 0)
 		{
-			return this->ReadStringW((wchar_t_t*)dst, _fn, len, endl, endl2);
+			return ReadStringW((wchar_t_t*)dst, _fn, len, endl, endl2);
 		}
 
 		// string length
@@ -239,13 +211,15 @@ namespace FIleHandler
 		{
 			// string is outside buffer length
 			if (stringlength > len)
+			{
 				break;
+			}
 
 			// returns if the current position is < file size and can read any left bytes
-			if (this->IsStreamVaild())
+			if (IsStreamVaild())
 			{
 				// reads bytes into a buffer with the size of length and returns the size read, -1 in case of error
-				if (this->ReadBytes(&chr, sizeof(unsigned char)) == -1)
+				if (ReadBytes(&chr, sizeof(unsigned char)) == -1)
 				{
 					return -1;
 				}
@@ -280,10 +254,5 @@ namespace FIleHandler
 
 		// return on error
 		return -1;
-	}
-
-	struct stat* FIleHandler::GetFileStats()
-	{
-		return &this->FileStats;
 	}
 }

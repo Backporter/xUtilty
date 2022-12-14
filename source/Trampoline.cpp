@@ -11,57 +11,32 @@
 #include <kernel.h>
 #elif defined(__OPENORBIS__)
 #include <orbis/libkernel.h>
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
-#include <switch.h>
-enum MemoryPermission
-{
-	MemoryPermission_None = 0x0,  //!<  Access to memory is prohibited.
-	MemoryPermission_ReadOnly = 0x1,  //!<  Memory is read-only.
-	MemoryPermission_WriteOnly = 0x2,  //!<  Memory is write-only.
-	MemoryPermission_ReadWrite = 0x3,  //!<  Memory can be read from and written to.
-	MemoryPermission_ReadExecute = 0x5,  //!<  Memory is available to read.
-};
-
-extern int32_t AllocateMemoryBlock(uintptr_t*, size_t);
-extern void SetMemoryPermission(uintptr_t, size_t, MemoryPermission);
-extern void FreeMemoryBlock(uintptr_t, size_t);
 #endif
 
 namespace Trampoline
 {
-	Trampoline::Trampoline():
-		SystemAllocatedMemory(0), SystemAllocatedLength(0), SystemAllocatedOffset(0), AllocSysAllocLen(0), AllocSysAllocAddr(0) {}
+	Trampoline::Trampoline() : SystemAllocatedMemory(0), SystemAllocatedLength(0), SystemAllocatedOffset(0), AllocSysAllocLen(0), AllocSysAllocAddr(0) {}
 
-	Trampoline::~Trampoline()
-	{
-		SystemDeallocate();
-	}
+	Trampoline::~Trampoline() { SystemDeallocate(); }
 
 	bool Trampoline::SystemAllocate(size_t TrampolineSize, size_t alignment)
 	{
 		int32_t ret = 0;
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 		if ((ret = sceKernelAllocateDirectMemory(0, sceKernelGetDirectMemorySize(), TrampolineSize, alignment, 0, &SystemAllocatedOffset)) != 0)
 		{
 			MessageHandler::Notify("Failed to allocate Direct Memory! sceKernelAllocateDirectMemory failed 0x%08X", ret);
 			return false;
 		}
-		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0x400000 : RelocationManager::RelocationManager::ApplicationBaseAddress);
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
-		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0xFFFF8001 : RelocationManager::RelocationManager::ApplicationBaseAddress);
-#endif
 
-// nn::os::AllocateMemoryBlock(SystemAllocatedMemory, TrampolineSize);
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0x400000 : RelocationManager::RelocationManager::ApplicationBaseAddress);
+
 		if ((ret = sceKernelMapDirectMemory(&SystemAllocatedMemory, TrampolineSize, 0x02, 0, SystemAllocatedOffset, TrampolineSize)) != 0)
 		{
 			MessageHandler::Notify("Failed To Map Direct Memory! sceKernelMapDirectMemory returned %lx", ret);
 			return false;
 		}
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
 
-#endif
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		if ((ret = sceKernelMprotect(SystemAllocatedMemory, TrampolineSize, VM_PROT_ALL)) != 0)
@@ -79,20 +54,14 @@ namespace Trampoline
 	{
 		if (SystemAllocatedMemory)
 		{
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 			sceKernelReleaseDirectMemory(SystemAllocatedOffset, SystemAllocatedLength);
-#elif defined(__SWITCH_) || defined(PLATFORM_NX)
-			FreeMemoryBlock(SystemAllocatedMemory, SystemAllocatedLength);
-#endif
 			SystemAllocatedMemory = NULL;
 		}
 	}
 
 	void Trampoline::SystemRestore(off_t src, size_t src_len)
 	{
-#if defined(__ORBIS__) || defined(__OPENORBIS__)
 		assert(sceKernelReleaseDirectMemory(src, src_len) == 0);
-#endif
 	}
 
 	void* Trampoline::StartTake()
@@ -132,7 +101,6 @@ namespace Trampoline
 		return result;
 	}
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 	void* Trampoline::allocate(Xbyak::CodeGenerator& code)
 	{
 		size_t length = code.getSize();
@@ -140,16 +108,36 @@ namespace Trampoline
 		memcpy(codebuf, code.getCode(), length);
 		return codebuf;
 	}
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
-	void* Trampoline::allocate(Xbyak_aarch64::CodeGenerator& code)
+
+	void* Trampoline::allocatePlugin(size_t a_handle, size_t a_size)
 	{
-		size_t length = code.getSize();
-		void* codebuf = Take(length);
-		memcpy(codebuf, code.getCode(), length);
-		return codebuf;
+		auto mutex = Trampoline::getallocMutex();
+		auto map = Trampoline::getallocMap();
+
+		auto alloc = Take(a_size);
+		if (alloc)
+		{
+			if (mutex.Lock())
+			{
+				auto entry = map.find(a_handle);
+				if (entry == map.end())
+				{
+					auto insert = map.insert(std::make_pair(a_handle, a_size));
+					assert(insert.second);
+				}
+				else
+					entry->second += a_size;
+
+				mutex.Unlock();
+			}
+		}
+		else
+		{
+			assert(false);
+		}
+
+		return alloc;
 	}
-#endif
 
 	Trampoline g_Trampoline;
-
 }

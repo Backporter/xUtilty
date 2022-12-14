@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CryptoHandler.h"
 #include "RelocationManager.h"
 #include "OrbisOffsertManger.h"
 #include "MemoryHandler.h"
@@ -8,89 +9,110 @@
 #include <stdint.h>
 #include <assert.h>
 
-// NAX ID LENGTH =  0x28/40
 template <typename T>
 class Relocation
 {
 public:
-	Relocation() 
-	{ 
-	}
+	Relocation() { }
 
-	Relocation(uintptr_t offset)
+	Relocation(uintptr_t a_offset) { Set(a_offset); }
+
+	Relocation(uint32_t a_id, uintptr_t a_offset) // : Relocation(a_offset)
 	{
-		this->Offset = reinterpret_cast <void*>(offset + RelocationManager::RelocationManager::ApplicationBaseAddress);
+		if (OrbisOffsetManger::g_useDB)
+		{
+			uintptr_t s_off = OrbisOffsetManger::OffsetManger::GetSingleton()->GetOffset(a_id);
+			
+			if (s_off != -1)
+				Set(s_off);
+			else
+				Set(a_offset);
+		}
+		else
+		{
+			Set(a_offset);
+		}
 	}
 
-	// 0x28/40
-	Relocation(const char* ID, uintptr_t defaultvalue)
+	Relocation(uint32_t a_id, uint32_t a_id2, uintptr_t a_offset) // : Relocation(a_offset)
 	{
-		this->Offset = reinterpret_cast <void*>(defaultvalue + RelocationManager::RelocationManager::ApplicationBaseAddress);
-		// auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(ID);
-		// this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
+		if (OrbisOffsetManger::g_useDB)
+		{
+			uintptr_t s_off = OrbisOffsetManger::OffsetManger::GetSingleton()->GetOffset(a_id);
+			
+			if (s_off != -1)
+				Set(s_off);
+			else
+			{
+				s_off = OrbisOffsetManger::OffsetManger::GetSingleton()->GetOffset(a_id2);
+				
+				if (s_off != -1)
+					Set(s_off);
+			}
+		}
+		else
+		{
+			 Set(a_offset);
+		}
 	}
 
-	Relocation(const char* a_id, const char* a_id2, uintptr_t defaultvalue)
-	{
-		this->Offset = reinterpret_cast <void*>(defaultvalue + RelocationManager::RelocationManager::ApplicationBaseAddress);
+	Relocation(const char* a_id, uintptr_t a_offset) : Relocation(CryptoHandler::GetCRC32(a_id), a_offset)
+	{}
 
-		// auto dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id);
-		// 
-		// if (dboffset == NULL)
-		// 	dboffset = OrbisOffsetManger::OffsetManger::GetSingleton()->_GetOffset(a_id2);
-		// 
-		// this->Offset = reinterpret_cast <void*>((dboffset == 0 ? defaultvalue : dboffset) + RelocationManager::RelocationManager::ApplicationBaseAddress);
-	}
+	Relocation(const char* a_id, const char* a_id2, uintptr_t a_offset) : Relocation(a_offset, CryptoHandler::GetCRC32(a_id), CryptoHandler::GetCRC32(a_id2))
+	{}
+	
+public:
 
-	void SetFromVtbl(void* a_type, int fn)
-	{
-		this->Offset = (void*)(((*reinterpret_cast<uintptr_t*>(a_type)) + (fn * 8)));
-	}
+	void Set(uintptr_t a_offset) { m_offset = reinterpret_cast <void*>(a_offset + RelocationManager::RelocationManager::ApplicationBaseAddress); }
 
 	operator T()
 	{
-		return reinterpret_cast <T>(Offset);
+		return reinterpret_cast<T>(m_offset);
 	}
 
+	Relocation<T>& operator=(Relocation<T>& a_rhs)
+	{
+		if (a_rhs != this)
+			m_offset = a_rhs.m_offset;
+
+		return *this;
+	}
+
+	uintptr_t operator+(uintptr_t a_value)
+	{
+		m_offset = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(m_offset) + a_value);
+		return reinterpret_cast<uintptr_t>(m_offset);
+	}
+	
 	uintptr_t operator=(uintptr_t address)
 	{
-		return reinterpret_cast<uintptr_t>(this->Offset = reinterpret_cast<void*>(address));
+		m_offset = reinterpret_cast<void*>(address);
+		return reinterpret_cast<uintptr_t>(m_offset);
 	}
 
-	uintptr_t operator += (uint64_t count)
+	uintptr_t operator+=(uint64_t count)
 	{
-		Offset = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Offset) + count);
-		return reinterpret_cast<uintptr_t>(Offset);
+		m_offset = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(m_offset) + count);
+		return reinterpret_cast<uintptr_t>(m_offset);
+	}
+public:
+	T GetPtr()
+	{
+		return reinterpret_cast<T>(m_offset);
 	}
 
 	uintptr_t GetUIntPtr() const
 	{
-		return reinterpret_cast <uintptr_t>(Offset);
+		return reinterpret_cast <uintptr_t>(m_offset);
 	}
 
-	// operator T() doesn't work with T* so we need to do this to stop the compiller from returning this instead of the pointer...
-	T GetPtr()
-	{
-		return reinterpret_cast<T>(Offset);
-	}
-
-	uintptr_t address()
-	{
-		return reinterpret_cast<uintptr_t>(Offset);
-	}
-
-	uintptr_t rawaddress()
-	{
-		return (reinterpret_cast<uintptr_t>(Offset) - RelocationManager::RelocationManager::ApplicationBaseAddress);
-	}
-
-
-	// this functions is a bit... annoying?... messy!
+	// vfunc stuff
 	uintptr_t write_vfunc_P(int idx, void* a_newFunc)
 	{
 		auto newFunc = a_newFunc;
 
-		uintptr_t addr = (uintptr_t)Offset + (sizeof(void*) * idx);
+		uintptr_t addr = (uintptr_t)m_offset + (sizeof(void*) * idx);
 		const auto result = *reinterpret_cast<uintptr_t*>(addr);
 
 		OrbisMemoryHandler::WriteType<void*>(addr, &newFunc);
@@ -112,5 +134,5 @@ public:
 		return ret;
 	}
 private:
-	void*		Offset;
+	void*		m_offset;
 };
