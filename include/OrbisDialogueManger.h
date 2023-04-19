@@ -22,8 +22,8 @@ typedef OrbisMsgDialogUserMessageParam SceMsgDialogUserMessageParam;
 typedef OrbisMsgDialogButtonsParam	   SceMsgDialogButtonsParam;
 typedef OrbisMsgDialogResult		   SceMsgDialogResult;
 typedef OrbisImeDialogSetting		   SceImeDialogParam;
-typedef OrbisDialogResult			   SceImeDialogResult;   // 
-typedef OrbisImeSettingsExtended       SceImeParamExtended;  // 
+typedef OrbisDialogResult			   SceImeDialogResult;
+typedef OrbisImeSettingsExtended       SceImeParamExtended;
 typedef OrbisErrorDialogParam		   SceErrorDialogParam;
 typedef OrbisCommonDialogBaseParam	   SceCommonDialogBaseParam;
 // be warned... #199 aka broken...

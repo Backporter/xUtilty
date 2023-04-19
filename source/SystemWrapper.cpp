@@ -12,18 +12,27 @@
 #include <kernel.h>
 #include <rtc.h>
 #elif defined(__OPENORBIS__)
+typedef OrbisKernelModule SceKernelModule;
+typedef OrbisKernelSema SceKernelSema;
+typedef OrbisKernelSemaOptParam SceKernelSemaOptParam;
+typedef OrbisKernelEventFlag SceKernelEventFlag;
+typedef OrbisKernelEventFlagOptParam SceKernelEventFlagOptParam;
 #include "../include/Mira.h"
 #include <orbis/libkernel.h>
 #include <orbis/Rtc.h>
 #endif
 
-
 #include <assert.h>
+#include <map>
+
+#ifndef USE_JBC
+#define USE_JBC false
+#endif
 
 namespace SystemWrapper
 {
 	static bool s_initialized{ false };
-	static std::vector<OrbisKernelModuleInfoHandle>	g_moduleList;
+	static std::map<int32_t, OrbisKernelModuleInfo> g_moduleList;
 
 	static int32_t libjbchandle{ -1 };
 	static int32_t zlibhandle{ -1 };
@@ -69,8 +78,8 @@ namespace SystemWrapper
 	int      (*_jbc_mount_in_sandbox)(const char *system_path, const char *mnt_name) { 0 };
 	int      (*_jbc_unmount_in_sandbox)(const char *mnt_name) { 0 };
 
-	int		(*_compress)(void*, unsigned long*, void*, unsigned long) { 0 };
-	int		(*_uncompress)(void*, unsigned long*, void*, unsigned long) { 0 };
+	int		 (*_compress)(void*, unsigned long*, void*, unsigned long) { 0 };
+	int		 (*_uncompress)(void*, unsigned long*, void*, unsigned long) { 0 };
 #pragma endregion
 
 #pragma region
@@ -364,34 +373,35 @@ namespace SystemWrapper
 		}
 	}
 
-
-	int		compress(void* a_dst, unsigned long* a_dstlen, void* a_src, unsigned long a_srclen)
+	int		compress(void* a_dst, unsigned long* a_dstden, void* a_src, unsigned long a_srclen)
 	{
 		if (_compress)
 		{
-			return _compress(a_dst, a_dstlen, a_src, a_srclen);
+			return _compress(a_dst, a_dstden, a_src, a_srclen);
 		}
 		else
 		{
-			return -1;
+			MessageHandler::KernelPrintOut("compress not dlsymed.");
+			return 0xFFFFFFFF;
 		}
 	}
 
-	int		uncompress(void* a_dst, unsigned long* a_dstlen, void* a_src, unsigned long a_srclen)
+	int		uncompress(void* a_dst, unsigned long* a_dstden, void* a_src, unsigned long a_srclen)
 	{
 		if (_uncompress)
 		{
-			return _uncompress(a_dst, a_dstlen, a_src, a_srclen);
+			return _uncompress(a_dst, a_dstden, a_src, a_srclen);
 		}
 		else
 		{
-			return -1;
+			MessageHandler::KernelPrintOut("uncompress not dlsymed.");
+			return 0xFFFFFFFF;
 		}
 	}
 #pragma endregion
 
 	bool initialized() { return s_initialized; }
-	std::vector<OrbisKernelModuleInfoHandle>& GetModuleList() { return g_moduleList; }
+	std::map<int32_t, OrbisKernelModuleInfo>& GetModuleList() { return g_moduleList; }
 
 	int32_t GetlibjbcHandle(int32_t* a_newhandle)	   { if (a_newhandle) { libjbchandle						= *a_newhandle; } return libjbchandle;						  }
 	int32_t GetLibcHandle(int32_t* a_newhandle)        { if (a_newhandle) { libchandle							= *a_newhandle; } return libchandle;						  }
@@ -405,13 +415,97 @@ namespace SystemWrapper
 	jbc_cred*				 GetOrginalcred()		    { return &Orginalcred; }
 	jbc_cred*				 GetRootCred()			    { return &RootCred; }
 	
+	int32_t	QueryMemoryProtection(void* addr, void** start, void** end, int* prot)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelQueryMemoryProtection(addr, start, end, prot);
+#else 
+		return 0xFF;
+#endif
+	}
+	
+	int32_t Mprotect(const void *addr, size_t len, int prot)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelMprotect(addr, len, prot);
+#else
+		return 0xFF;
+#endif
+	}
+
+	int32_t CreateSemaphore(void* a_semaphore, const char* a_name, uint32_t a_attr, int32_t a_initCount, int32_t a_maxCount, const void* a_pParam)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelCreateSema(reinterpret_cast<SceKernelSema*>(a_semaphore), a_name, a_attr, a_initCount, a_maxCount, reinterpret_cast<const SceKernelSemaOptParam*>(a_pParam));
+#else
+		return 0;
+#endif
+	}
+
+	int32_t CreateEvent(void* a_event, const char* a_name, uint32_t a_attr, uint64_t a_initPattern, const void* a_Param)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelCreateEventFlag(reinterpret_cast<SceKernelEventFlag*>(a_event), a_name, a_attr, a_initPattern, reinterpret_cast<const SceKernelEventFlagOptParam*>(a_Param));
+#else
+		return 0;
+#endif
+	}
+
+	int32_t DeleteSemaphore(void* a_semaphore)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelDeleteSema(reinterpret_cast<SceKernelSema>(a_semaphore));
+#else
+		return 0;
+#endif
+	}
+
+	int32_t DeleteEvent(void* a_event)
+	{
+#if __ORBIS__ || __OPENORBIS__
+		return sceKernelDeleteEventFlag(reinterpret_cast<SceKernelEventFlag>(a_event));
+#else
+		return 0;
+#endif
+	}
+
+
+	const char*	strchr_s(const char* _Str, char _Ch)
+	{
+		const char* ret = strchr(_Str, _Ch);
+		if (ret)
+		{
+			return ret + 1;
+		}
+
+		return _Str;
+	}
+	
+	const char* strrchr_s(const char *_Str, char _Ch)
+	{
+		const char* ret = strrchr(_Str, _Ch);
+		if (ret)
+		{
+			return ret + 1;
+		}
+
+		return _Str;
+	}
+
 	void	ImportSymbols()
 	{
 		int ret = 0;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
+		const char* libcpath = "/app0/sce_module/libc.prx";
 		const char* libjbcpath = "/app0/modules/libjbc.prx";
 		const char* zlibpath = "/app0/modules/zlib.prx";
+
+		// libc inside the game? use it, otherwise use the system's libc.
+		if (!OrbisFileSystem::PathExists(OrbisFileSystem::Full, libcpath, false))
+		{
+			libcpath = "libc.sprx";
+		}
 
 		if (!OrbisFileSystem::PathExists(OrbisFileSystem::Full, libjbcpath, false))
 		{
@@ -422,7 +516,6 @@ namespace SystemWrapper
 		{
 			zlibpath = "/data/modules/zlib.prx";
 		}
-
 
 		libkernelhandle = sceKernelLoadStartModule("libkernel.sprx", 0, 0, 0, 0, 0);
 		if (libkernelhandle > 0)
@@ -497,7 +590,7 @@ namespace SystemWrapper
 			MessageHandler::Notify("Failed To Load libkernel (libkernel.sprx %d", libkernelhandle);
 		}
 
-		libchandle = sceKernelLoadStartModule("libc.sprx", 0, 0, 0, 0, 0);
+		libchandle = sceKernelLoadStartModule(libcpath, 0, 0, 0, 0, 0);
 		if (libchandle > 0)
 		{
 			if ((ret = sceKernelDlsym(libchandle, "wcstombs", (void**)&_wcstombs)) != 0)
@@ -596,10 +689,17 @@ namespace SystemWrapper
 			return;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
+
+		if (USE_JBC)
+		{
+			// backup, nonvolatile.
+			jbc_get_cred(&BackupOrginalcred);
+		}
+
 		ImportSymbols();
 		sceKernelGetSystemSwVersion(&Firmware);
 
-		if (libjbchandle > 0)
+		if (libjbchandle > 0 && USE_JBC)
 		{
 			Jailbreak();
 			sysKernelGetLowerLimitUpdVersion(&sysKernelGetLowerLimitUpdVersionarg);
@@ -609,9 +709,6 @@ namespace SystemWrapper
 		{
 			sysKernelGetLowerLimitUpdVersionarg = Firmware.Version;
 		}
-
-		// backup, nonvolatile.
-		jbc_get_cred(&BackupOrginalcred);
 
 #elif defined(__SWITCH__)
 #endif
@@ -728,5 +825,131 @@ namespace SystemWrapper
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
 		return true;
 #endif
+	}
+	
+	//
+	bool	initializeModuleList()
+	{
+		if (g_moduleList.size() > 0)
+			return true;
+
+#if __ORBIS__ || __OPENORBIS__
+
+		size_t s_moduleCount = 0;
+		int ret = 0;
+		int32_t handles[SCE_KERNEL_MAX_MODULES] { 0 };
+
+		if ((ret = sceKernelGetModuleList((SceKernelModule*)handles, SCE_KERNEL_MAX_MODULES, &s_moduleCount)))
+		{
+			PRINT_FMT("sceKernelGetModuleList failed with 0x%lx", ret);
+			return false;
+		}
+
+		for (size_t i = 0; i < s_moduleCount; i++)
+		{
+			OrbisKernelModuleInfo s_moduleInfo;
+			s_moduleInfo.size = 0x160;
+
+			if ((ret = sceKernelGetModuleInfo(handles[i], &s_moduleInfo)))
+			{
+				PRINT_FMT("sceKernelGetModuleInfo failed with 0x%lx", ret);
+				break;
+			}
+			else
+			{
+				g_moduleList.insert({ handles[i], s_moduleInfo });
+			}
+		}
+
+		return (g_moduleList.size() > 0);
+#else
+		return false;
+#endif
+	}
+
+	int		GetModuleHandle(const char* a_name)
+	{
+		// no modules in the list?
+		if (!g_moduleList.size())
+		{
+			// init list.
+			if (!initializeModuleList())
+			{
+				// failed?, force close the game.
+				assert(false);
+			}
+		}
+
+		for (auto pair : g_moduleList)
+		{
+			const char* moduleListName = strrchr_s(pair.second.name, '/');
+			const char* paramModuleName = strrchr_s(a_name, '/');
+
+			if (!strcasecmp(moduleListName, paramModuleName))
+			{
+				return pair.first;
+			}
+		}
+
+		return -1;
+	}
+
+	bool	IsModuleLoaded(const char* a_name)
+	{
+		return GetModuleHandle(a_name) != -1;
+	}
+
+	OrbisKernelModuleInfo*	GetModuleInfo(const char* a_name)
+	{
+		// no modules in the list?
+		if (g_moduleList.size() == 0)
+		{
+			// init list.
+			if (!initializeModuleList())
+			{
+				// failed?, force close the game.
+				assert(false);
+			}
+		}
+
+		for (auto pair : g_moduleList)
+		{
+			const char* moduleListName = strrchr_s(pair.second.name, '/');
+			const char* paramModuleName = strrchr_s(a_name, '/');
+			
+			if (!strcasecmp(moduleListName, paramModuleName))
+			{
+				return &pair.second;
+			}
+		}
+
+		return nullptr;
+	}
+
+	uintptr_t GetModuleAddress(const char* a_name)
+	{
+		// no modules in the list?
+		if (!g_moduleList.size())
+		{
+			// init list.
+			if (!initializeModuleList())
+			{
+				// failed?, force close the game.
+				assert(false);
+			}
+		}
+
+		for (auto pair : g_moduleList)
+		{
+			const char* moduleListName = strrchr_s(pair.second.name, '/');
+			const char* paramModuleName = strrchr_s(a_name, '/');
+
+			if (!strcasecmp(moduleListName, paramModuleName))
+			{
+				return (uintptr_t)pair.second.segmentInfo[0].baseAddr;
+			}
+		}
+
+		return 0;
 	}
 }

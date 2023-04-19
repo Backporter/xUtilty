@@ -1,5 +1,4 @@
 #pragma once
-#include "../include/FileSystem.h"
 
 #if defined(__ORBIS__)
 #include <kernel.h>
@@ -31,16 +30,18 @@ typedef sockaddr_in  SceNetSockaddrIn;
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#ifndef _MESSAGE
-#define _MESSAGE(fmt) Log::Log::GetSingleton()->Write(fmt);
-#endif
-
-#ifndef _MESSAGE_VA
-#define _MESSAGE_VA(fmt, ...) Log::Log::GetSingleton()->Write(fmt, __VA_ARGS__);
-#endif
 
 namespace Log
 {
+	enum LoggerInstance : int
+	{
+		KModuleLog,
+		kInputOutputLog,
+		kUserInterfaceLog,
+		kVirtualMachineLog,
+		kMax,
+	};
+
 	// kManagedPath means we cloned the string.
 	enum kFlags
 	{
@@ -74,16 +75,10 @@ namespace Log
 		virtual bool WriteLevel(int a_logLevel, const char* a_fmt, ...);
 		virtual bool Send(const char* MessageFMT, ...);
 	public:
-		static Log* GetSingleton() 
+		static Log* GetSingleton(LoggerInstance i = LoggerInstance::KModuleLog)
 		{ 
-			static Log singleton; 
-			return &singleton;
-		}
-
-		static Log* MiscLog()
-		{
-			static Log log;
-			return &log;
+			static Log singleton[kMax]; 
+			return &singleton[i];
 		}
 	private:
 		const char*  m_path;

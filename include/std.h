@@ -1,51 +1,87 @@
 #pragma once
+
 #include <type_traits>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <map>
-#include <queue>
-#include <set>
-#include <stack>
-#include <string>
-#include <tuple>
-#include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <vector>
-#include <type_traits>
+#include <iterator>
 
-namespace stl
+namespace std
 {
-	template<class _Ty, class _Uty>
-	constexpr bool is_same_v = std::is_same<_Ty, _Uty>::value;
+	template <typename _Tp>
+	inline void destroy_at(_Tp* __location)
+	{
+		if constexpr (__cplusplus > 201703L && std::is_array<_Tp>::value)
+		{
+			for (auto& __x : *__location)
+				destroy_at(std::addressof(__x));
+		}
+		else
+			__location->~_Tp();
+	}
 
-	template<class _From, class _To>
-	constexpr bool is_convertible_v = std::is_convertible<_From, _To>::value;
+	template<typename _Tp, typename... _Args>
+	constexpr auto
+		construct_at(_Tp* __location, _Args&&... __args)
+		noexcept(noexcept(::new((void*)0) _Tp(std::declval<_Args>()...)))
+		-> decltype(::new((void*)0) _Tp(std::declval<_Args>()...))
+	{
+		return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...);
+	}
 
-	template<bool _Test, class _Ty>
-	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
+	template<class _InIt, class _Diff, class _FwdIt> inline
+		std::pair<_InIt, _FwdIt> uninitialized_move_n(_InIt _First, _Diff _Count, _FwdIt _Dest)
+	{	// move [_First, _First + _Count) to [_Dest, ...)
+		for (; 0 < _Count; ++_First, (void)++_Dest, --_Count)
+			::new (static_cast<void *>(std::addressof(*_Dest)))
+			typename std::iterator_traits<_FwdIt>::value_type(std::move(*_First));
+		return (std::pair<_InIt, _FwdIt>(_First, _Dest));
+	}
 
-	template<class _Ty>
-	using decay_t = typename std::decay<_Ty>::type;
+	template<class _FwdIt, class Size>
+	_FwdIt uninitialized_default_construct_n(_FwdIt _First, Size _Count)
+	{	// default construct by count
+		for (; 0 < _Count; (void)++_First, --_Count)
+			::new (static_cast<void *>(std::addressof(*_First)))
+			typename std::iterator_traits<_FwdIt>::value_type;
+		return (_First);
+	}
 
-	template <typename T> struct is_stl_container { static constexpr bool const value = false; };
-	template <typename T, std::size_t N> struct is_stl_container<std::array<T, N>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::vector<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::deque<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::list<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::forward_list<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::set<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::multiset<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::map<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::multimap<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::unordered_set<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::unordered_multiset<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::unordered_map<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::unordered_multimap<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::stack<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::queue<Args...>> { static constexpr bool const value = true; };
-	template <typename... Args> struct is_stl_container<std::priority_queue<Args...>> { static constexpr bool const value = true; };
-	template <typename T> using is_stl_container_v = typename is_stl_container<decay_t<T>>::value;
+
+	template<class _FwdIt, class _Size>
+	_FwdIt destroy_n(_FwdIt _First, _Size _Count)
+	{	// destroy by count
+		for (; 0 < _Count; (void)++_First, --_Count)
+			destroy_at(std::addressof(*_First));
+		return (_First);
+	}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+	template <typename _Fp>
+	constexpr _Fp _lerp(_Fp a, _Fp b, _Fp t)
+	{
+		if (a <= 0 && b >= 0 || a >= 0 && b <= 0)
+			return t * b + (1 - t) * a;
+
+		if (t == 1)
+			return b;
+
+		const _Fp x = a + t * (b - a);
+		return t > 1 == b > a ? (b < x ? x : b) : (b > x ? x : b);
+	}
+#pragma clang diagnostic pop
+
+	inline constexpr float lerp(float a, float b, float t) noexcept 
+	{ 
+		return _lerp(a, b, t); 
+	}
+
+	inline constexpr double lerp(double a, double b, double t) noexcept 
+	{ 
+		return _lerp(a, b, t); 
+	}
+
+	inline constexpr long double lerp(long double a, long double b, long double t) noexcept 
+	{ 
+		return _lerp(a, b, t); 
+	}
 }

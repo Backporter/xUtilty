@@ -32,8 +32,8 @@ namespace
 			
 			// open flags:
 			kFlagReadMode		= 1 << 1, // R
-			kFlagWriteMode		= 1 << 2,
-			kFlagReadWriteMode  = 1 << 3,
+			kFlagWriteMode		= 1 << 2, // W
+			kFlagReadWriteMode  = 1 << 3, // RW
 			
 			kFlagDirectory		= 1 << 4,
 			kFlagCreate			= 1 << 5,

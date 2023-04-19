@@ -18,7 +18,6 @@
     <ClInclude Include="include\Relocation.h" />
     <ClInclude Include="include\RelocationManager.h" />
     <ClInclude Include="include\SystemWrapper.h" />
-    <ClInclude Include="include\Trampoline.h" />
     <ClInclude Include="include\SafeTypes.h" />
     <ClInclude Include="include\CPU.h" />
     <ClInclude Include="include\GPU.h" />
@@ -35,6 +34,9 @@
     <ClInclude Include="include\WIP\Streams\IFIleStream.h" />
     <ClInclude Include="include\bitFlags.h" />
     <ClInclude Include="include\SaveData.h" />
+    <ClInclude Include="include\Trampoline.h" />
+    <ClInclude Include="include\type_traits.h" />
+    <ClInclude Include="include\stl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\CryptoHandler.cpp" />
@@ -51,11 +53,11 @@
     <ClCompile Include="source\OrbisSFOHandler.cpp" />
     <ClCompile Include="source\RelocationManager.cpp" />
     <ClCompile Include="source\SystemWrapper.cpp" />
-    <ClCompile Include="source\Trampoline.cpp" />
     <ClCompile Include="source\CPU.cpp" />
     <ClCompile Include="source\GPU.cpp" />
     <ClCompile Include="source\MemoryUsageTracker.cpp" />
     <ClCompile Include="source\FramerateTracker.cpp" />
     <ClCompile Include="source\Platform.cpp" />
+    <ClCompile Include="source\Trampoline.cpp" />
   </ItemGroup>
 </Project>

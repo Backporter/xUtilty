@@ -1,5 +1,7 @@
 #pragma once
+
 #include "IMemoryAllocator.h"
+
 #include <stddef.h>
 #include <set>
 #include <map>
@@ -8,7 +10,7 @@
 namespace MEMORY
 {
 	template <typename T>
-	class stl_allocator
+	class std_allocator
 	{
 	public:
 		typedef size_t size_type;
@@ -19,8 +21,8 @@ namespace MEMORY
 		typedef const T& const_reference;
 		typedef T value_type;
 
-		stl_allocator() {}
-		~stl_allocator() {}
+		std_allocator() {}
+		~std_allocator() {}
 
 		pointer address(reference x) const { return &x; }
 		const_pointer address(const_reference x) const { return &x; }
@@ -52,15 +54,15 @@ namespace MEMORY
 		}
 	};
 
-	template<class _Kty, class _Pr = std::less<_Kty>, class _Alloc = stl_allocator<_Kty>>
+	template<class _Kty, class _Pr = std::less<_Kty>, class _Alloc = std_allocator<_Kty>>
 	using set = std::set<_Kty, _Pr, _Alloc>;
 
-	template<class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = stl_allocator<std::pair<const _Kty, _Ty>>>
+	template<class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std_allocator<std::pair<const _Kty, _Ty>>>
 	using map = std::map<_Kty, _Ty, _Pr, _Alloc>;
 
-	template<class _Ty, class _Alloc = stl_allocator<_Ty>>
+	template<class _Ty, class _Alloc = std_allocator<_Ty>>
 	using vector = std::vector<_Ty, _Alloc>;
 
-	using string = std::basic_string<char, std::char_traits<char>, stl_allocator<char>>;
-	using wstring = std::basic_string<wchar_t, std::char_traits<wchar_t>, stl_allocator<wchar_t>>;
+	using string = std::basic_string<char, std::char_traits<char>, std_allocator<char>>;
+	using wstring = std::basic_string<wchar_t, std::char_traits<wchar_t>, std_allocator<wchar_t>>;
 }

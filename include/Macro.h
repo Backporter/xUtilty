@@ -121,6 +121,10 @@
 #define COMBINE(str1, str2) (str1 str2)
 #endif
 
+#ifndef COMBINE2
+#define COMBINE2(str1, str2) str1 str2
+#endif
+
 #ifndef NAKED
 #define NAKED __attribute__((naked))
 #endif

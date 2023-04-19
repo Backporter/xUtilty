@@ -16,6 +16,27 @@
 #define SCE_KERNEL_MAX_MODULES 256
 #endif
 
+typedef struct _FILETIME
+{
+public:
+	uint32_t dwLowDateTime;
+	uint32_t dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct _WIN32_FIND_DATAA
+{
+public:
+	uint32_t	  dwFileAttributes;
+	FILETIME      ftCreationTime;
+	FILETIME      ftLastAccessTime;
+	FILETIME      ftLastWriteTime;
+	uint32_t	  nFileSizeHigh;
+	uint32_t	  nFileSizeLow;
+	uint32_t	  dwReserved0;
+	uint32_t	  dwReserved1;
+	char          cFileName[260];
+	char          cAlternateFileName[14];
+} WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 
 typedef struct OrbisRtcDateTime
 {

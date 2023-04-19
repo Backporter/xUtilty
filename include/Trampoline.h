@@ -1,18 +1,18 @@
 #pragma once
 
-#include <stdint.h>
-#include <assert.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <iostream>
-#include <map>
-
 #include "SystemWrapper.h"
 #include "MemoryHandler.h"
 #include "MessageHandler.h"
 #include "Mutex.h"
 
 #include "../Third-Party/herumi/xbayk/6.00/xbyak.h"
+
+#include <stdint.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stddef.h>
+#include <iostream>
+#include <map>
 
 #ifndef TRAMPOLINE_H_
 #define TRAMPOLINE_H_
@@ -36,7 +36,7 @@ namespace Trampoline
 		}
 
 	} __attribute__((__packed__));
-	static_assert(sizeof(TrampolineABS) == 14, "Size of TrampolineABS is incorrect");
+	static_assert(sizeof(TrampolineABS) == 14);
 
 	struct TrampolineHook5
 	{
@@ -50,7 +50,7 @@ namespace Trampoline
 		}
 
 	} __attribute__((__packed__));
-	static_assert(sizeof(TrampolineHook5) == 5, "Size of TrampolineHook5 is incorrect");
+	static_assert(sizeof(TrampolineHook5) == 5);
 
 	struct TrampolineHook6
 	{
@@ -66,18 +66,35 @@ namespace Trampoline
 		}
 
 	} __attribute__((__packed__));
-	static_assert(sizeof(TrampolineHook6) == 6, "Size of TrampolineHook6 is incorrect");
+	static_assert(sizeof(TrampolineHook6) == 6);
 
 #pragma endregion
 
-	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE.
+
+	template <typename T>
+	class OrbisTrampolineAllocatr
+	{
+	public:
+		OrbisTrampolineAllocatr() { }
+	public:
+	};
+
+	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE, ill improve on this at some point....
 	class Trampoline
 	{
 	public:
 		Trampoline();
 		~Trampoline();
 
-		bool SystemAllocate(size_t TrampolineSize = 1024 * 64, size_t alignment = 1024 * 64);
+		bool SystemAllocate(void* a_trampoline, const size_t a_capacity) 
+		{
+			SystemAllocatedMemory = a_trampoline;
+			SystemAllocatedLength = a_capacity;
+			AllocSysAllocLen	  = 0;
+			return SystemAllocatedMemory != NULL;
+		}
+
+		bool SystemAllocate(size_t TrampolineSize = 1024 * 64, size_t alignment = 0);
 		void SystemDeallocate();
 		void SystemRestore(off_t src, size_t src_len = 1024 * 64);
 
@@ -89,8 +106,12 @@ namespace Trampoline
 		size_t Remain() { return SystemAllocatedLength - AllocSysAllocLen; }
 
 		template <size_t N>
-		void WriteCall(uintptr_t source, uintptr_t dest)
+		uintptr_t WriteCall(uintptr_t a_src, uintptr_t dest)
 		{
+			const auto disp = reinterpret_cast<int32_t*>(a_src + N - 4);
+			const auto nextOp = a_src + N;
+			const auto func = nextOp + *disp;
+
 			if constexpr (N == 5)
 			{
 				TrampolineABS* ABS = (TrampolineABS*)Take(sizeof(TrampolineABS));
@@ -101,14 +122,14 @@ namespace Trampoline
 					TrampolineHook5 Hook;
 
 					uintptr_t	trampolineAddr = uintptr_t(ABS);
-					uintptr_t	nextInstr = source + sizeof(Hook);
+					uintptr_t	nextInstr = a_src + sizeof(Hook);
 					ptrdiff_t	trampolineDispl = trampolineAddr - nextInstr;
 
 					assert((trampolineDispl >= INT32_MIN) && (trampolineDispl <= INT32_MAX));
 
 					Hook.Init(trampolineDispl, 0xE8);
 
-					OrbisMemoryHandler::WriteType(source, &Hook, sizeof(Hook));
+					OrbisMemoryHandler::safe_write(a_src, &Hook, sizeof(Hook));
 				}
 
 			}
@@ -118,7 +139,7 @@ namespace Trampoline
 				if (trampoline)
 				{
 					uintptr_t	trampolineAddr = (uintptr_t)trampoline;
-					uintptr_t	nextInstr = source + 6;
+					uintptr_t	nextInstr = a_src + 6;
 					ptrdiff_t	trampolineDispl = trampolineAddr - nextInstr;
 
 					if ((trampolineDispl >= INT32_MIN) && (trampolineDispl <= INT32_MAX))
@@ -126,9 +147,8 @@ namespace Trampoline
 						TrampolineHook6 code;
 
 						code.Init(0x15, (int32_t)trampolineDispl);
-						OrbisMemoryHandler::WriteType(source, &code, sizeof(code));
+						OrbisMemoryHandler::safe_write(a_src, &code, sizeof(code));
 						*trampoline = dest;
-
 					}
 				}
 			}
@@ -136,11 +156,17 @@ namespace Trampoline
 			{
 				static_assert(N & 0, "Invalid Template Size");
 			}
+
+			return func;
 		}
 
 		template <size_t N>
-		void WriteJMP(uintptr_t source, uintptr_t dest)
+		uintptr_t WriteJMP(uintptr_t a_src, uintptr_t dest)
 		{
+			const auto disp = reinterpret_cast<int32_t*>(a_src + N - 4);
+			const auto nextOp = a_src + N;
+			const auto func = nextOp + *disp;
+
 			if constexpr (N == 5)
 			{
 				TrampolineABS* ABS = (TrampolineABS*)Take(sizeof(TrampolineABS));
@@ -151,14 +177,14 @@ namespace Trampoline
 					TrampolineHook5 Hook;
 
 					uintptr_t	trampolineAddr = uintptr_t(ABS);
-					uintptr_t	nextInstr = source + sizeof(Hook);
+					uintptr_t	nextInstr = a_src + sizeof(Hook);
 					ptrdiff_t	trampolineDispl = trampolineAddr - nextInstr;
 
 					assert((trampolineDispl >= INT32_MIN) && (trampolineDispl <= INT32_MAX));
 
 					Hook.Init(trampolineDispl, 0xE9);
 
-					OrbisMemoryHandler::WriteType(source, &Hook, sizeof(Hook));
+					OrbisMemoryHandler::safe_write(a_src, &Hook, sizeof(Hook));
 				}
 
 			}
@@ -168,7 +194,7 @@ namespace Trampoline
 				if (trampoline)
 				{
 					uintptr_t	trampolineAddr = (uintptr_t)trampoline;
-					uintptr_t	nextInstr = source + 6;
+					uintptr_t	nextInstr = a_src + 6;
 					ptrdiff_t	trampolineDispl = trampolineAddr - nextInstr;
 
 					if ((trampolineDispl >= INT32_MIN) && (trampolineDispl <= INT32_MAX))
@@ -176,7 +202,7 @@ namespace Trampoline
 						TrampolineHook6 code;
 
 						code.Init(0x25, (int32_t)trampolineDispl);
-						OrbisMemoryHandler::WriteType(source, &code, sizeof(code));
+						OrbisMemoryHandler::safe_write(a_src, &code, sizeof(code));
 						*trampoline = dest;
 
 					}
@@ -186,28 +212,31 @@ namespace Trampoline
 			{
 				static_assert(N & 0, "Invalid Template Size");
 			}
+
+			return func;
 		}
 
-		template <size_t N>
-		void WriteCall(uintptr_t source, Xbyak::CodeGenerator& xbayk) { return WriteCall<N>(source, uintptr_t(xbayk.getCode())); }
+		template <size_t N, typename T>
+		uintptr_t WriteCall(uintptr_t source, T dest)	{ return WriteCall<N>(source, (uintptr_t)dest); }
 
-		template <size_t N>
-		void WriteJMP(uintptr_t source, Xbyak::CodeGenerator& xbayk) { return WriteJMP<N>(source, uintptr_t(xbayk.getCode())); }
+		template <size_t N, typename T>
+		uintptr_t WriteJMP(uintptr_t source, T dest)	{ return WriteJMP<N>(source, (uintptr_t)dest); }
 	public:
-		static Mutex::Mutex&			 getallocMutex() { static Mutex::Mutex mutex;					return mutex;	  }
-		static std::map<size_t, size_t>& getallocMap()   { static std::map<size_t, size_t> allocMap;	return allocMap;  }
-		static Trampoline&				 get()		     { static Trampoline singleton;					return singleton; }
+		static Trampoline&				 get()		    { static Trampoline singleton;					return singleton; }
 	public:
-		void*							 allocatePlugin(size_t a_handle, size_t a_size);
+		void*	allocatePlugin(size_t a_handle, size_t a_size);
+		void	restorePlugin(size_t a_handle, void* a_allocated, size_t a_size);
 	private:
 		void*		SystemAllocatedMemory;
 		size_t		SystemAllocatedLength;
 		off_t		SystemAllocatedOffset;
 		size_t		AllocSysAllocLen;
 		void*		AllocSysAllocAddr;
+	protected:
+		std::mutex							m_mapLock;
+		std::unordered_map<size_t, size_t>	m_PluginMap;
 	};
 
-	
 	extern Trampoline g_Trampoline;
 }
 #endif

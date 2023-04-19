@@ -10,12 +10,24 @@ namespace RelocationManager
 	static RelocationManager RelocationManger;
 
 	uintptr_t RelocationManager::ApplicationBaseAddress = 0;
-	uintptr_t RelocationManager::LibkernelBaseAddress = 0;
 
 	RelocationManager::RelocationManager()
 	{
 		SystemWrapper::initialize();
 
-		ApplicationBaseAddress = OrbisMiraHandler::GetBaseAddress();
+#if __ORBIS__ || __OPENORBIS__
+		if (OrbisMiraHandler::IsMira())
+		{
+			MessageHandler::KernelPrintOut("Mira Detected.. using mira API");
+			ApplicationBaseAddress = OrbisMiraHandler::GetBaseAddress();
+
+		}
+		else
+		{
+			MessageHandler::KernelPrintOut("Mira not detected.. using system API");
+			auto sysbaseaddr = SystemWrapper::GetModuleAddress("/app0/eboot.bin");
+			ApplicationBaseAddress = !sysbaseaddr ? 0x400000 : sysbaseaddr;
+		}
+#endif
 	}
 }

@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../SystemWrapper.h"
 
 #if __ORBIS__
@@ -40,8 +41,8 @@ public:
 	allocatorfunc_t* GetAllocatorFunc() { return g_allocatefunc; }
 	deallocatefunc_t* GetDealocateFunc() { return g_deallocateFunc; }
 public:
-	static allocatorfunc_t* g_allocatefunc;
-	static deallocatefunc_t* g_deallocateFunc;
+	static allocatorfunc_t*		g_allocatefunc;
+	static deallocatefunc_t*	g_deallocateFunc;
 };
 
 inline IMemoryAllocator::allocatorfunc_t* IMemoryAllocator::g_allocatefunc = nullptr;

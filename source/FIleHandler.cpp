@@ -108,7 +108,7 @@ namespace FIleHandler
 		return false;
 	}
 
-	uint64_t FIleHandler::ReadBytes(void* dst, size_t dstLength)
+	uint64_t FIleHandler::ReadBytes(void* dst, size_t dstdength)
 	{
 		if (!m_fd)
 			return -1;
@@ -116,10 +116,10 @@ namespace FIleHandler
 		if (m_fdpos >= m_filestats.st_size)
 			return -1;
 
-		if ((m_ret = read(m_fd, dst, dstLength)) > 0)
+		if ((m_ret = read(m_fd, dst, dstdength)) > 0)
 		{
-			m_fdpos += dstLength;
-			return dstLength;
+			m_fdpos += dstdength;
+			return dstdength;
 		}
 		
 		return -1;

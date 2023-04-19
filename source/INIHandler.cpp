@@ -59,12 +59,15 @@ namespace OrbisINIHandler
 			// Game
 			m_ConsoleToptions.RenderTargetTextureWidth      = m_reader.GetInteger("Game", "iRenderTargetTextureWidth", 1920);
 			m_ConsoleToptions.RenderTargetTextureHeight     = m_reader.GetInteger("Game", "iRenderTargetTextureHeight", 1080);
-			m_ConsoleToptions.EnableContainerCategorization = m_reader.GetInteger("Game", "bEnableContainerCategorization", 0);
-			
+			m_ConsoleToptions.EnableContainerCategorization = m_reader.GetBoolean("Game", "bEnableContainerCategorization", 0);
+			m_ConsoleToptions.ClearInvalidRegistrations		= m_reader.GetBoolean("Game", "bClearInvalidRegistrations", 0);
+
 			// PSN
 			m_ConsoleToptions.BypassPSN						= m_reader.GetBoolean("PSN", "bBypassPSN", false);
 			m_ConsoleToptions.HideWarning					= m_reader.GetBoolean("PSN", "bHideWarning", false);
 			m_ConsoleToptions.UserID						= strdup(m_reader.Get("PSN", "sUserID", "NULL").c_str());
+			m_ConsoleToptions.Age							= m_reader.GetInteger("PSN", "iAge", 18);
+			m_ConsoleToptions.UserID						= strdup(m_reader.Get("PSN", "sCountryCode", "US").c_str());
 
 			// SaveData
 			m_ConsoleToptions.CompressSaveData				= m_reader.GetBoolean("SaveData", "bCompressSaveData", false);
@@ -77,6 +80,9 @@ namespace OrbisINIHandler
 			m_ConsoleToptions.EnableGFxLogger				= m_reader.GetBoolean("Debugger",	"bEnableGFxLogger",			true);
 			m_ConsoleToptions.EnableVirtualMachineLog		= m_reader.GetBoolean("Debugger",	"bEnableVirtualMachineLog", false);
 			m_ConsoleToptions.IsDebugMode					= m_reader.GetBoolean("Debugger",	"bIsDebugMode",				false);
+
+			// Executible
+			m_ConsoleToptions.UseModuleStartAsEntryPoint	= m_reader.GetBoolean("Executable", "bUseModuleStartAsEntryPoint", false);
 
 			if (m_ConsoleToptions.BypassPSN && !m_ConsoleToptions.HideWarning)
 			{

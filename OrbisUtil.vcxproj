@@ -61,6 +61,7 @@
       <CppExceptions>true</CppExceptions>
       <CppLanguageStd>Cpp14</CppLanguageStd>
       <OptimizationLevel>Level0</OptimizationLevel>
+      <CLanguageStd>C11</CLanguageStd>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -68,10 +69,17 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ORBIS'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__ORBIS__;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OptimizationLevel>Level2</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <CppLanguageStd>Cpp14</CppLanguageStd>
+      <CLanguageStd>C11</CLanguageStd>
+      <CppExceptions>true</CppExceptions>
     </ClCompile>
+    <Lib>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\bitFlags.h" />
@@ -101,9 +109,11 @@
     <ClInclude Include="include\SafeTypes.h" />
     <ClInclude Include="include\SaveData.h" />
     <ClInclude Include="include\std.h" />
+    <ClInclude Include="include\stl.h" />
     <ClInclude Include="include\SystemWrapper.h" />
     <ClInclude Include="include\Trampoline.h" />
     <ClInclude Include="include\Types.h" />
+    <ClInclude Include="include\type_traits.h" />
     <ClInclude Include="include\WIP\Streams\IFIleStream.h" />
     <ClInclude Include="include\WIP\Streams\IMemoryStream.h" />
     <ClInclude Include="include\WIP\Streams\IStream.h" />

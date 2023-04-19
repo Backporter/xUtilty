@@ -1,11 +1,11 @@
+#include "../include/Trampoline.h"
+#include "../include/RelocationManager.h"
+#include "../include/Macro.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <iostream>
-
-#include "../include/Trampoline.h"
-#include "../include/RelocationManager.h"
-#include "../include/Macro.h"
 
 #if defined(__ORBIS__)
 #include <kernel.h>
@@ -111,24 +111,20 @@ namespace Trampoline
 
 	void* Trampoline::allocatePlugin(size_t a_handle, size_t a_size)
 	{
-		auto mutex = Trampoline::getallocMutex();
-		auto map = Trampoline::getallocMap();
-
 		auto alloc = Take(a_size);
 		if (alloc)
 		{
-			if (mutex.Lock())
-			{
-				auto entry = map.find(a_handle);
-				if (entry == map.end())
-				{
-					auto insert = map.insert(std::make_pair(a_handle, a_size));
-					assert(insert.second);
-				}
-				else
-					entry->second += a_size;
+			std::lock_guard<decltype(m_mapLock)> locker(m_mapLock);
 
-				mutex.Unlock();
+			auto entry = m_PluginMap.find(a_handle);
+			if (entry == m_PluginMap.end())
+			{
+				auto insert = m_PluginMap.insert(std::make_pair(a_handle, a_size));
+				assert(insert.second);
+			}
+			else
+			{
+				entry->second += a_size;
 			}
 		}
 		else
@@ -137,6 +133,11 @@ namespace Trampoline
 		}
 
 		return alloc;
+	}
+
+	void Trampoline::restorePlugin(size_t a_handle, void* a_allocated, size_t a_size)
+	{
+
 	}
 
 	Trampoline g_Trampoline;

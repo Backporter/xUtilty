@@ -132,10 +132,9 @@ namespace OrbisFileSystem
 	bool		PathExists(int, const char*, bool);
 	bool		CreateFullPath(char* buffer, int reltype, const char* Relpath, ...);
 	size_t		CreateString(char* buffer, const char* FMT, ...);
-	void		CreateDirectoryPath(char* path);
+	bool		CreateDirectoryPath(char* path);
 	const char* GetFilenameFromPath(const char* path);
 
 	void		WriteFileToDisk(int reltype, const char* path, const void* data, size_t length);
 	bool		Dump(const char* TypeName, void* base, int size);
-
 }

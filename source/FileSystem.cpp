@@ -29,6 +29,12 @@ namespace OrbisFileSystem
 	{
 		std::vector<DirectoryEntry> DirectoryEntries;
 
+		size_t stringlen = strlen(path) - 1;
+
+#if _DEBUG
+		MessageHandler::KernelPrintOut("%s %d %d", path, stringlen, path[stringlen]);
+#endif
+
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
 
@@ -86,7 +92,11 @@ namespace OrbisFileSystem
 				// compare the extension and add it
 				std::string filename;
 				if (combine)
+				{
 					filename += (char*)path;
+					if (path[stringlen] != '/')
+						filename += "/";
+				}
 
 				filename += entry->d_name;
 
@@ -95,12 +105,41 @@ namespace OrbisFileSystem
 
 				if (strcasecmp(ext.c_str(), extension) == 0)
 				{
-					DirectoryEntries.push_back(DirectoryEntry(combine ? std::string(path) + entry->d_name : entry->d_name, entry->d_type, entry->d_fileno));
+					std::string m_string;
+					if (combine)
+					{
+						m_string = std::string(path);
+
+						if (path[stringlen] != '/')
+							m_string += "/";
+
+						m_string += entry->d_name;
+					}
+					else
+					{
+						m_string = entry->d_name;
+					}
+
+					DirectoryEntries.push_back(DirectoryEntry(m_string, entry->d_type, entry->d_fileno));
 				}
 			}
 			else
 			{
-				DirectoryEntries.push_back(DirectoryEntry(combine ? std::string(path) + entry->d_name : entry->d_name, entry->d_type, entry->d_fileno));
+				std::string m_string;
+				if (combine)
+				{
+					m_string = std::string(path);
+					
+					if (path[stringlen] != '/')
+						m_string += "/";
+
+					m_string += entry->d_name;
+				}
+				else
+				{
+					m_string = entry->d_name;
+				}
+				DirectoryEntries.push_back(DirectoryEntry(m_string, entry->d_type, entry->d_fileno));
 			}
 		}
 
@@ -489,7 +528,7 @@ namespace OrbisFileSystem
 		return length;
 	}
 
-	void		CreateDirectoryPath(char* path)
+	bool		CreateDirectoryPath(char* path)
 	{
 		char buf[260]{ 0 };
 
@@ -505,6 +544,8 @@ namespace OrbisFileSystem
 
 			buf[i] = path[i];
 		}
+
+		return true;
 	}
 
 	const char* GetFilenameFromPath(const char* path)
@@ -548,12 +589,12 @@ namespace OrbisFileSystem
 
 		if (fd <= 0)
 		{
-			MessageHandler::KernelPrintOut("Failed to open [%s] for R/W", (reltype == Full ? path : buffer));
+			MessageHandler::KernelPrintOut("Failed to open [%for R/W", (reltype == Full ? path : buffer));
 			return;
 		}
 
 		if ((ret = write(fd, data, length)) != length)
-			MessageHandler::KernelPrintOut("Failed to write to [%s] fd[0x%lx] ret [0x%lx] length [0x%lx]", (reltype == Full ? path : buffer), fd, ret, length);
+			MessageHandler::KernelPrintOut("Failed to write to [%fd[0x%lx] ret [0x%lx] length [0x%lx]", (reltype == Full ? path : buffer), fd, ret, length);
 
 		close(fd);
 		Unmount(reltype);

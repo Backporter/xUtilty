@@ -8,36 +8,55 @@
 #include <orbis/libkernel.h>
 #endif
 
-namespace Mutex
+class Mutex
 {
-	class Mutex
+public:
+	enum Type
 	{
-	public:
-		// using pthread_mutex_t = struct pthread_mutex*;
-		// using pthread_mutexattr_t = struct pthread_mutex_attr*;
-	public:
-		Mutex(const char* name = NULL);
-		~Mutex();
-
-		bool TryLock();
-		bool TryUnlock();
-		bool Lock();
-		bool Unlock();
-
-		bool Enter() { return Lock(); }
-		bool Leave() { return Unlock(); }
-		bool TryEnter() { return TryLock(); }
-	protected:
-		pthread_mutex_t	    m_mutex;
-		pthread_mutexattr_t m_mutexAttr;
+		kLoadGame,
+		kUserInterfaceTasklet,
+		kTaskPoolTasklet,
+		kMax,
 	};
 
-	// game
-	extern Mutex GlobalMutex5;
+	// using pthread_mutex_t = pthread_mutex_t;
+	// using pthread_mutexattr_t = pthread_mutexattr_t;
+public:
+	Mutex(const char* name = NULL);
+	~Mutex();
 
-	// UI
-	extern Mutex GlobalMutex10;
+	//
+	bool TryLock();
+	bool TryUnlock();
+	bool Lock();
+	bool Unlock();
 
-	// Tasklet
-	extern Mutex GlobalMutex11;
-}
+	static Mutex& GetSingleton(Type a_mutexType)
+	{
+		static Mutex singleton[Type::kMax];
+		return singleton[a_mutexType];
+	}
+
+protected:
+	pthread_mutex_t	    m_mutex;
+	pthread_mutexattr_t m_mutexAttr;
+};
+
+template <typename T>
+class scoped_lock
+{
+public:
+	scoped_lock(T& a_lock) : m_lock(a_lock) { m_lock.Lock(); }
+	~scoped_lock() { m_lock.Unlock(); }
+public:
+	T& m_lock;
+};
+
+// game
+extern Mutex GlobalMutex5;
+
+// UI
+extern Mutex GlobalMutex10;
+
+// Tasklet
+extern Mutex GlobalMutex11;

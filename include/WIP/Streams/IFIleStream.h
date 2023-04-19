@@ -47,49 +47,41 @@ namespace
 			if (IsT(IStream::kFlags::kFlagReadMode))
 			{
 				s_openflags = O_RDONLY;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagWriteMode))
 			{
 				s_openflags = O_WRONLY;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagReadWriteMode))
 			{
 				s_openflags = O_RDWR;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagDirectory))
 			{
 				s_openflags |= O_DIRECTORY;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagCreate))
 			{
 				s_openflags |= O_CREAT;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagTruncate))
 			{
 				s_openflags |= O_TRUNC;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagAppend))
 			{
 				s_openflags |= O_APPEND;
-				PRINT_POS;
 			}
 
 			if (IsT(IStream::kFlags::kFlagDirect))
 			{
 				s_openflags |= O_DIRECT;
-				PRINT_POS;
 			}
 
 			m_handle = open(a_path, s_openflags, 0000777);
@@ -104,14 +96,11 @@ namespace
 				return true;
 			}
 
-			MessageHandler::KernelPrintOut("[0x%lx] [%s] [%s] [0x%lx] [0000777]", m_handle, a_path, strerror(errno), s_openflags);
+			MessageHandler::KernelPrintOut("[0x%lx] [%[%[0x%lx] [0000777]", m_handle, a_path, strerror(errno), s_openflags);
 			return false;
 		}
 
-		bool	IsVaild() 
-		{ 
-			return (m_handle > 0); 
-		}
+		bool	IsVaild()  { return (m_handle > 0); }
 		
 		void	Dispose() override 
 		{ 
@@ -121,7 +110,8 @@ namespace
 			if (m_handle > 0) 
 			{ 
 				close(m_handle); 
-			} 
+				SetT(IStream::kFlags::kFlagIsDisposed);
+			}
 		}
 
 		int64_t	Read(void* a_dst, size_t a_size) override
@@ -129,7 +119,10 @@ namespace
 			if (m_handle > 0 && a_dst && a_size)
 			{
 				if (read(m_handle, a_dst, a_size) == a_size)
+				{
+					m_streamPosition += a_size;
 					return a_size;
+				}
 				else
 				{
 					MessageHandler::KernelPrintOut("IFileStream::Read(void*,size_t) failed with (%s)", strerror(errno));
@@ -146,6 +139,8 @@ namespace
 			{
 				if (write(m_handle, a_buff, a_len) != a_len)
 					MessageHandler::KernelPrintOut("IFileStream::Write(void*,size_t) failed with (%s)", strerror(errno));
+				else
+					m_streamPosition += a_len;
 			}
 		}
 
@@ -155,11 +150,14 @@ namespace
 
 			if (m_handle > 0)
 			{
-				if ((s_ret = lseek(m_handle, a_offset, a_seekType)) > 0)
+				if ((s_ret = lseek(m_handle, a_offset, a_seekType)) != -1)
+				{
+					m_streamPosition = a_offset;
 					return s_ret;
+				}
 				else
 				{
-					MessageHandler::KernelPrintOut("IFileStream::Seek(int64_t,int) failed with (%s)", strerror(errno));
+					MessageHandler::KernelPrintOut("IFileStream::Seek(int64_t,int) failed with (%d %s)", s_ret, strerror(errno));
 					return -1;
 				}
 				
@@ -174,17 +172,18 @@ namespace
 				MessageHandler::KernelPrintOut("IFileStream::Flush() failed with (%s)", strerror(errno));
 		}
 
-		void Truncate(int64_t a_size)
+		void	Truncate(int64_t a_size)
 		{
 			int ret = 0;
 
 			if (m_handle > 0)
 			{
-				if (ret = ftruncate(m_handle, a_size) != 0)
+				if ((ret = ftruncate(m_handle, a_size)) != 0)
 				{
-					MessageHandler::KernelPrintOut("ftruncate failed with %d", ret);
+					MessageHandler::KernelPrintOut("ftruncate failed with %d(%s)", ret, strerror(errno));
 				}
-
+				else
+					m_streamPosition = a_size;
 			}
 		}
 	protected:

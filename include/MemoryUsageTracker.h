@@ -16,7 +16,7 @@ namespace MemoryUtil
 	{
 	public:
 		MemoryUsageTracker();
-		~MemoryUsageTracker() { }
+		~MemoryUsageTracker() = default;
 		
 		int		Update();
 		size_t	GetMaxSystemSize();
@@ -34,6 +34,8 @@ namespace MemoryUtil
 			return &s;
 		}
 	public:
+#if __ORBIS__
 		SceLibcMallocManagedSize stats;
+#endif
 	};
 }

@@ -193,6 +193,7 @@ namespace OrbisMiraHandler
 			{
 				return addr;
 			}
+
 			g_processmodulelist = ProcessModules(fd);
 			close(fd);
 		}

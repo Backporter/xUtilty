@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <string>
 
+/* this class will be removed in future versions, wonce i finish WIP/Streams/IFileStream */
+
 namespace FIleHandler
 {
 	enum kTypeFlags
@@ -47,7 +49,7 @@ namespace FIleHandler
 		bool		 IsStreamVaild();
 		bool		 Rewind(uint64_t count);
 		bool		 Skip(uint64_t count);
-		uint64_t	 ReadBytes(void* dst, size_t dstLength);
+		uint64_t	 ReadBytes(void* dst, size_t dstdength);
 		uint64_t	 WriteBytes(void* srcbuf, size_t srcLength);
 		uint64_t	 ReadString(char* dst, int(*_fn)(int) = NULL, uint64_t len = 512, char endl = '\n', char endl2 = '\r');
 		uint64_t	 ReadStringW(wchar_t_t* dst, int(*_fn)(int) = NULL, uint64_t len = 512 * 2, char endl = '\n', char endl2 = '\r');

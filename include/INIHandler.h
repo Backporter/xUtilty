@@ -35,11 +35,14 @@ namespace OrbisINIHandler
 		int32_t		RenderTargetTextureWidth{ 1920 };																							// iRenderTargetTextureWidth
 		int32_t		RenderTargetTextureHeight{ 1080 };																							// iRenderTargetTextureHeight
 		bool        EnableContainerCategorization{ 0 };																							// bEnableContainerCategorization
+		bool		ClearInvalidRegistrations{ 0 };																								// bClearInvalidRegistrations
 
 		// [PSN]
 		bool		BypassPSN{ false };																											// bHideWarning
 		bool		HideWarning{ false };																										// bBypassPSN
 		const char* UserID{ "NULL" };																											// sUserID
+		int8_t		Age{ 18 };																													// iUserAge
+		const char* CountryCode { "US" };																										// iUserContryCode
 
 		// [SaveData]
 		bool		CompressSaveData{ false };																									// bCompressSaveData
@@ -53,6 +56,9 @@ namespace OrbisINIHandler
 		bool		EnableGFxLogger{ true };																									// bEnableGFxLogger
 		bool		EnableVirtualMachineLog{ false };																							// bEnableVirtualMachineLog
 		bool		IsDebugMode{ false };																										// bIsDebugMode
+	
+		// [Executable]
+		bool		UseModuleStartAsEntryPoint{ false };																						// bUseModuleStartAsEntryPoint
 	};
 
 	class OrbisINIHandler
