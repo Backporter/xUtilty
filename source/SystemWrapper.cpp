@@ -26,7 +26,7 @@ typedef OrbisKernelEventFlagOptParam SceKernelEventFlagOptParam;
 #include <map>
 
 #ifndef USE_JBC
-#define USE_JBC false
+#define USE_JBC true
 #endif
 
 namespace SystemWrapper
