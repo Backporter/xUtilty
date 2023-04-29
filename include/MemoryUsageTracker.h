@@ -1,5 +1,8 @@
 #pragma once
 
+// size_t
+#include <cstdio>
+
 #include <stdint.h>
 
 #if __ORBIS__

@@ -24,7 +24,14 @@
 // assert
 #include <assert.h>
 
+// va_args
+#include <stdarg.h>
+
 #if __OPENORBIS__
+
+// OrbisNetSockaddr
+#include <orbis/Net.h>
+
 typedef OrbisNetSockaddr SceNetSockaddr;
 typedef sockaddr_in  SceNetSockaddrIn;
 #endif
