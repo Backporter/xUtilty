@@ -1,62 +1,41 @@
 #pragma once
 
+// pthread_mutex_t, pthread_mutexattr_t
 #include <pthread.h>
 
-#if defined(__ORBIS__)
-#include <mutex>
-#elif defined(__OPENORBIS__)
-#include <orbis/libkernel.h>
-#endif
-
-class Mutex
+namespace xUtilty
 {
-public:
-	enum Type
+	class Mutex
 	{
-		kLoadGame,
-		kUserInterfaceTasklet,
-		kTaskPoolTasklet,
-		kMax,
+	public:
+		enum Type { kGame, kUI, kTasklet, kReserved1, kReserved2, kReserved3, kReserved4, kTotal };
+	public:
+		Mutex(const char* a_name = NULL);
+		~Mutex();
+
+		static Mutex& GetSingleton(int a_mutexType)
+		{
+			static Mutex Singleton[kTotal];
+			return Singleton[a_mutexType];
+		}
+
+		// 
+		bool TryLock();
+		bool TryUnlock();
+		bool Lock();
+		bool Unlock();
+	protected:
+		pthread_mutex_t	    m_mutex;
+		pthread_mutexattr_t m_mutexAttr;
 	};
 
-	// using pthread_mutex_t = pthread_mutex_t;
-	// using pthread_mutexattr_t = pthread_mutexattr_t;
-public:
-	Mutex(const char* name = NULL);
-	~Mutex();
-
-	//
-	bool TryLock();
-	bool TryUnlock();
-	bool Lock();
-	bool Unlock();
-
-	static Mutex& GetSingleton(Type a_mutexType)
+	template <typename T>
+	class scoped_lock
 	{
-		static Mutex singleton[Type::kMax];
-		return singleton[a_mutexType];
-	}
-
-protected:
-	pthread_mutex_t	    m_mutex;
-	pthread_mutexattr_t m_mutexAttr;
-};
-
-template <typename T>
-class scoped_lock
-{
-public:
-	scoped_lock(T& a_lock) : m_lock(a_lock) { m_lock.Lock(); }
-	~scoped_lock() { m_lock.Unlock(); }
-public:
-	T& m_lock;
-};
-
-// game
-extern Mutex GlobalMutex5;
-
-// UI
-extern Mutex GlobalMutex10;
-
-// Tasklet
-extern Mutex GlobalMutex11;
+	public:
+		scoped_lock(T& a_lock) : m_lock(a_lock) { m_lock.Lock(); }
+		~scoped_lock() { m_lock.Unlock(); }
+	public:
+		T& m_lock;
+	};
+}

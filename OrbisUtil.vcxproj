@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{72C2AA1E-9ED3-48EA-99FA-DC9241308175}</ProjectGuid>
-    <ProjectName>_OrbisUtil</ProjectName>
+    <ProjectName>_xUtilty</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ORBIS'" Label="Configuration">
@@ -85,7 +85,6 @@
     <ClInclude Include="include\bitFlags.h" />
     <ClInclude Include="include\CPU.h" />
     <ClInclude Include="include\CryptoHandler.h" />
-    <ClInclude Include="include\EMOJI.h" />
     <ClInclude Include="include\FIleHandler.h" />
     <ClInclude Include="include\FileSystem.h" />
     <ClInclude Include="include\FramerateTracker.h" />
@@ -95,19 +94,15 @@
     <ClInclude Include="include\Macro.h" />
     <ClInclude Include="include\MemoryHandler.h" />
     <ClInclude Include="include\MemoryUsageTracker.h" />
-    <ClInclude Include="include\Memory\IMemoryAllocator.h" />
-    <ClInclude Include="include\Memory\IMemoryAllocatorSTL.h" />
     <ClInclude Include="include\MessageHandler.h" />
     <ClInclude Include="include\Mira.h" />
     <ClInclude Include="include\Mutex.h" />
-    <ClInclude Include="include\OrbisDialogueManger.h" />
-    <ClInclude Include="include\OrbisOffsertManger.h" />
+    <ClInclude Include="include\DialogueManger.h" />
+    <ClInclude Include="include\OffsertManger.h" />
     <ClInclude Include="include\OrbisSFOHandler.h" />
-    <ClInclude Include="include\Platform.h" />
     <ClInclude Include="include\Relocation.h" />
     <ClInclude Include="include\RelocationManager.h" />
     <ClInclude Include="include\SafeTypes.h" />
-    <ClInclude Include="include\SaveData.h" />
     <ClInclude Include="include\std.h" />
     <ClInclude Include="include\stl.h" />
     <ClInclude Include="include\SystemWrapper.h" />
@@ -133,10 +128,9 @@
     <ClCompile Include="source\MessageHandler.cpp" />
     <ClCompile Include="source\Mira.cpp" />
     <ClCompile Include="source\Mutex.cpp" />
-    <ClCompile Include="source\OrbisDialogueManger.cpp" />
-    <ClCompile Include="source\OrbisOffsertManger.cpp" />
+    <ClCompile Include="source\DialogueManger.cpp" />
+    <ClCompile Include="source\OffsertManger.cpp" />
     <ClCompile Include="source\OrbisSFOHandler.cpp" />
-    <ClCompile Include="source\Platform.cpp" />
     <ClCompile Include="source\RelocationManager.cpp" />
     <ClCompile Include="source\SystemWrapper.cpp" />
     <ClCompile Include="source\Trampoline.cpp" />

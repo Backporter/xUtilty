@@ -1,61 +1,58 @@
 #pragma once
 
-#include "EMOJI.h"
+// THINKING
+#include "../include/Macro.h"
 
 #include <stdint.h>
 #include <cstring>
 #include <stdio.h>
 #include <stdarg.h>
 
-#if defined(__SWITCH__) || defined(PLATFORM_NX)
-#include <switch/include/svc.h>
-#endif
-
 // print the current code pos into the kernel log(debug)
 #ifndef PRINT_POS
-#define PRINT_POS MessageHandler::KernelPrintOut("%s %s %d", __FUNCTION__, __FILE__, __LINE__);
-#define PRINT_POS_N MessageHandler::Notify("%s %s %d", __FUNCTION__, __FILE__, __LINE__);
+#define PRINT_POS xUtilty::KernelPrintOut("%s %s %d", __FUNCTION__, __FILE__, __LINE__);
+#define PRINT_POS_N xUtilty::Notify("%s %s %d", __FUNCTION__, __FILE__, __LINE__);
 #endif
 
 // print the current code pos into the kernel log and return(debug)
 #ifndef PRINT_POS_RETURN 
-#define PRINT_POS_RETURN MessageHandler::KernelPrintOut("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, THINKING); return;
-#define PRINT_POS_RETURN_N MessageHandler::Notify("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, THINKING); return;
+#define PRINT_POS_RETURN xUtilty::KernelPrintOut("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, THINKING); return;
+#define PRINT_POS_RETURN_N xUtilty::Notify("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, THINKING); return;
 
 #endif
 
 // print the current code pos + custom fmt + string into the kernel log 
 #ifndef PRINT_FMT
-#define PRINT_FMT(fmt, ...) MessageHandler::KernelPrintOut("%s %s %d %s " fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__);
-#define PRINT_FMT_N(fmt, ...) MessageHandler::Notify("%s %s %d %s " fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__);
+#define PRINT_FMT(fmt, ...) xUtilty::KernelPrintOut("%s %s %d %s " fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__);
+#define PRINT_FMT_N(fmt, ...) xUtilty::Notify("%s %s %d %s " fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__);
 #endif
 
 // print the current code pos + custom fmt + string into the kernel log and return T
 #ifndef PRINT_FMT_RETURN_T
-#define PRINT_FMT_RETURN_T(T, fmt, ...) MessageHandler::KernelPrintOut("%s %s %d %s "  fmt, __FUNCTION__,__FILE__, __LINE__, THINKING, __VA_ARGS__); return T;
-#define PRINT_FMT_RETURN_T_N(T, fmt, ...) MessageHandler::Notify("%s %s %d %s "  fmt, __FUNCTION__,__FILE__, __LINE__, THINKING, __VA_ARGS__); return T;
+#define PRINT_FMT_RETURN_T(T, fmt, ...) xUtilty::KernelPrintOut("%s %s %d %s "  fmt, __FUNCTION__,__FILE__, __LINE__, THINKING, __VA_ARGS__); return T;
+#define PRINT_FMT_RETURN_T_N(T, fmt, ...) xUtilty::Notify("%s %s %d %s "  fmt, __FUNCTION__,__FILE__, __LINE__, THINKING, __VA_ARGS__); return T;
 #endif
 
 // print the current code pos + custom fmt + string into the kernel log and return(debug)
 #ifndef PRINT_RETURN
-#define PRINT_RETURN(fmt, ...) MessageHandler::KernelPrintOut("%s %s %d %s "  fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__); return;
-#define PRINT_RETURN_N(fmt, ...) MessageHandler::Notify("%s %s %d %s "  fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__); return;
+#define PRINT_RETURN(fmt, ...) xUtilty::KernelPrintOut("%s %s %d %s "  fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__); return;
+#define PRINT_RETURN_N(fmt, ...) xUtilty::Notify("%s %s %d %s "  fmt, __FUNCTION__, __FILE__, __LINE__, THINKING, __VA_ARGS__); return;
 
 #endif
 
 // print the current code pos + custom string into the kernel log and return(debug)
 #ifndef PRINT_STRING_RETURN 
-#define PRINT_STRING_RETURN(string)  MessageHandler::KernelPrintOut("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, string); return;
-#define PRINT_STRING_RETURN_N(string)  MessageHandler::Notify("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, string); return;
+#define PRINT_STRING_RETURN(string)  xUtilty::KernelPrintOut("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, string); return;
+#define PRINT_STRING_RETURN_N(string)  xUtilty::Notify("%s %s %d %s", __FUNCTION__, __FILE__, __LINE__, string); return;
 #endif
 
 // print the current code pos + custom string into the kernel log(debug)
 #ifndef PRINT_STRING
-#define PRINT_STRING(string)  MessageHandler::KernelPrintOut("%s %s %d %s", __FUNCTION__,__FILE__, __LINE__, string);
-#define PRINT_STRING_N(string)  MessageHandler::Notify("%s %s %d %s", __FUNCTION__,__FILE__, __LINE__, string);
+#define PRINT_STRING(string)  xUtilty::KernelPrintOut("%s %s %d %s", __FUNCTION__,__FILE__, __LINE__, string);
+#define PRINT_STRING_N(string)  xUtilty::Notify("%s %s %d %s", __FUNCTION__,__FILE__, __LINE__, string);
 #endif
 
-namespace MessageHandler
+namespace xUtilty
 {
 	enum MessageType
 	{
@@ -115,7 +112,7 @@ namespace MessageHandler
 
 	// Pushes a Notifcation and writes to the kernel log
 	void Notify(const char* MessageFMT, ...);
-	
+
 	// writes to the kernel log
 	void KernelPrintOut(const char* MessageFMT, ...);
 }

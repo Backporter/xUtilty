@@ -1,12 +1,14 @@
-#include <stdint.h>
-#include <iostream>
-
 #include "../include/MessageHandler.h"
+
+//
 #include "../include/SystemWrapper.h"
 #include "../include/INIHandler.h"
 
+#include <stdint.h>
+#include <iostream>
 #include <time.h>
-namespace MessageHandler
+
+namespace xUtilty
 {
 	void LocalPrint(const char * FMT, ...)
 	{
@@ -29,11 +31,11 @@ namespace MessageHandler
 		Buffer.unk3 = 0;
 		Buffer.UseIconImageUri = 1;
 		Buffer.TargetId = -1;
-		
-		auto* INI = OrbisINIHandler::OrbisINIHandler::GetSingleton();
+
+		auto* INI = INIHandler::INIHandler::GetSingleton();
 		if (INI->GetINIOptions()->UseCustomIconURL)
 		{
-			strncpy(Buffer.Uri, OrbisINIHandler::OrbisINIHandler::GetSingleton()->GetINIOptions()->Icon, sizeof(Buffer.Uri));
+			strncpy(Buffer.Uri, INI->GetINIOptions()->Icon, sizeof(Buffer.Uri));
 		}
 		else
 		{
@@ -57,17 +59,14 @@ namespace MessageHandler
 		time(&s_time);
 		auto time = localtime(&s_time);
 		std::strftime(MessageBuf, 1024, "[%m/%d/%Y - %I:%M:%S%p] ", time);
-		
+
 		// stub the size.
 		auto timelen = strlen(MessageBuf);
-		
+
 		va_list args;
 		va_start(args, MessageFMT);
-		size_t  length = SystemWrapper::vsprintf(&MessageBuf[timelen], MessageFMT, args);
+		size_t length = SystemWrapper::vsprintf(&MessageBuf[timelen], MessageFMT, args);
 		va_end(args);
-
-		// copy buf
-
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		SystemWrapper::sceKernelDebugOutText(0, MessageBuf);

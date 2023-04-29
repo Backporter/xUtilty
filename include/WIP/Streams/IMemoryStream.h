@@ -24,7 +24,7 @@ namespace
 			void* mem = malloc(m_streamLength);
 			if (!mem)
 			{
-				MessageHandler::Notify("malloc failed");
+				xUtilty::Notify("malloc failed");
 				return;
 			}
 
@@ -53,7 +53,7 @@ namespace
 			{
 				if (!a_buffer || !a_bufflen)
 				{
-					MessageHandler::KernelPrintOut("Invailed buffer passed into MemoryStream.. ignoring.");
+					xUtilty::KernelPrintOut("Invailed buffer passed into MemoryStream.. ignoring.");
 				}
 				else
 				{
@@ -82,7 +82,7 @@ namespace
 			{
 				if (!a_buffer || !a_bufflen)
 				{
-					MessageHandler::Notify("Invaild buffer/size passed into IMemoryStream::Write(void*, size_t)");
+					xUtilty::Notify("Invaild buffer/size passed into IMemoryStream::Write(void*, size_t)");
 				}
 				else
 				{
@@ -122,7 +122,7 @@ namespace
 			void* mem = realloc(m_buffer, a_newSize);
 			if (!mem)
 			{
-				MessageHandler::KernelPrintOut("realloc failed... [0x%lx]", a_newSize);
+				xUtilty::KernelPrintOut("realloc failed... [0x%lx]", a_newSize);
 				return false;
 			}
 

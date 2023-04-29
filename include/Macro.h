@@ -1,27 +1,23 @@
-#pragma once
+﻿#pragma once
 
 #include <stdint.h>
-
-#ifndef ISDEBUG
-#if defined(_DEBUG) || defined(DEBUG) 
-#define ISDEBUG true
-#else
-#define ISDEBUG false
-#endif
-#endif
-
-#ifndef MACRO_SWAP 
-#define MACRO_SWAP(a, b, c) ((a ? b : c))
-#endif
-
-#ifndef DEBUG_BUILD_MACRO_SWITCH
-#define DEBUG_BUILD_MACRO_SWITCH(a, b)  MACRO_SWAP(ISDEBUG, a, b)
-#endif
 
 #if __ORBIS__
 #include <machine\endian.h>
 #elif __OPENORBIS__
 #include <byteswap.h>
+#endif
+
+#ifndef THINKING
+#define THINKING "🤔"
+#endif
+
+#ifndef MACRO_SWAP 
+#define MACRO_SWAP(TEST, b, c) ((TEST ? b : c))
+#endif
+
+#ifndef DEBUG_BUILD_MACRO_SWITCH
+#define DEBUG_BUILD_MACRO_SWITCH(a, b)  MACRO_SWAP(_DEBUG, a, b)
 #endif
 
 #ifndef MIN3
@@ -112,6 +108,7 @@
 #define PRINT_OFFSETOF(A, B) char (*__daniel_kleinstein_is_cool)[sizeof(char[offsetof(A, B)])] = 1
 #endif 
 
+
 #ifndef STRINGIFY
 #define STRINGIFYEX(a) #a
 #define STRINGIFY(a) STRINGIFYEX(a)
@@ -131,16 +128,6 @@
 
 #ifndef MAX_PATH
 #define MAX_PATH 260
-#endif
-
-#ifndef ROOT
-#if __ORBIS__ || __OPENORBIS__
-#define ROOT "/app0/"
-#elif defined(PLATFORM_NX) || defined(__SWITCH__)
-#define ROOT "rom:/"
-#else
-#define ROOT ""
-#endif
 #endif
 
 #ifndef FORCE_CRASH

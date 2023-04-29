@@ -1,64 +1,74 @@
-#include "../include/SystemWrapper.h"
 #include "../include/MemoryUsageTracker.h"
 
-namespace MemoryUtil
+//
+#include "../include/SystemWrapper.h"
+
+namespace xUtilty
 {
-	MemoryUsageTracker::MemoryUsageTracker()
+	namespace MemoryUtil
 	{
+		MemoryUsageTracker::MemoryUsageTracker()
+		{
 #if __ORBIS__
-		stats.size = sizeof(stats);
-		stats.version = 0x0001U;
-		stats.reserved1 = 0;
-		stats.maxSystemSize = 0;
-		stats.currentSystemSize = 0;
-		stats.maxInuseSize = 0;
-		stats.currentInuseSize = 0;
+			stats.size = sizeof(stats);
+			stats.version = 0x0001U;
+			stats.reserved1 = 0;
+			stats.maxSystemSize = 0;
+			stats.currentSystemSize = 0;
+			stats.maxInuseSize = 0;
+			stats.currentInuseSize = 0;
 #endif
-	}
+		}
 
-	int		MemoryUsageTracker::Update()					
-	{
+		int		MemoryUsageTracker::Update()
+		{
 #if __ORBIS__
-		return malloc_stats(&stats);	   
+			return malloc_stats(&stats);
 #else
-		return 0;
+			return 0;
 #endif
-	}
+		}
 
-	size_t	MemoryUsageTracker::GetMaxSystemSize()			
-	{ 
+		size_t	MemoryUsageTracker::GetMaxSystemSize()
+		{
 #if __ORBIS__
-		return stats.maxSystemSize; 			
+			return stats.maxSystemSize;
 #endif
-	}
+		}
 
-	size_t	MemoryUsageTracker::GetCurrentSystemSize()		
-	{ 
+		size_t	MemoryUsageTracker::GetCurrentSystemSize()
+		{
 #if __ORBIS__
-		return stats.currentSystemSize;			
+			return stats.currentSystemSize;
 #endif
-	}
+		}
 
-	size_t	MemoryUsageTracker::GetMaxInuseSize()			
-	{ 
+		size_t	MemoryUsageTracker::GetMaxInuseSize()
+		{
 #if __ORBIS__
-		return stats.maxInuseSize;							   
+			return stats.maxInuseSize;
 #endif
-	}
+		}
 
-	size_t	MemoryUsageTracker::GetCurrentInuseSize()		
-	{ 
+		size_t	MemoryUsageTracker::GetCurrentInuseSize()
+		{
 #if __ORBIS__
-		return stats.currentInuseSize;						   
+			return stats.currentInuseSize;
 #endif
-	}
+		}
 
-	size_t	MemoryUsageTracker::GetCurrentFreeMemory()		
-	{ 
+		size_t	MemoryUsageTracker::GetCurrentFreeMemory()
+		{
 #if __ORBIS__
-		return stats.currentSystemSize - stats.currentInuseSize; 
+			return stats.currentSystemSize - stats.currentInuseSize;
 #endif
-	}
+		}
 
-	size_t  MemoryUsageTracker::GetCurrentAllocatedMemory() {														   }
+		size_t  MemoryUsageTracker::GetCurrentAllocatedMemory()
+		{
+#if __ORBIS__ 
+			return stats.currentSystemSize;
+#endif
+		}
+	}
 }

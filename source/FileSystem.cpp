@@ -1,5 +1,7 @@
-#include "../include/SystemWrapper.h"
 #include "../include/FileSystem.h"
+
+//
+#include "../include/SystemWrapper.h"
 #include "../include/MessageHandler.h"
 
 #if defined(__ORBIS__)
@@ -9,6 +11,7 @@
 #include <sys\dirent.h>
 #elif defined(__OPENORBIS__)
 #include <orbis/libkernel.h>
+#include <orbis/Rtc.h>
 #include <dirent.h>
 #endif
 
@@ -23,87 +26,109 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace OrbisFileSystem
+namespace xUtilty
 {
-	std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, const char* extension, bool UseFilter, int PathType, bool combine)
+	namespace FileSystem
 	{
-		std::vector<DirectoryEntry> DirectoryEntries;
+		std::vector<DirectoryEntry> GetDirectoryEntries(const char* path, const char* extension, bool UseFilter, int PathType, bool combine)
+		{
+			std::vector<DirectoryEntry> DirectoryEntries;
 
-		size_t stringlen = strlen(path) - 1;
+			size_t stringlen = strlen(path) - 1;
 
 #if _DEBUG
-		MessageHandler::KernelPrintOut("%s %d %d", path, stringlen, path[stringlen]);
+			KernelPrintOut("%s %d %d", path, stringlen, path[stringlen]);
 #endif
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
+			bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
 
-		if (SwapCreed)
-			SystemWrapper::Jailbreak();
-#endif
-
-		int fd = open(path, O_RDONLY | O_DIRECTORY, 0000555);
-		if (fd < 0) 
-		{
-			MessageHandler::Notify("open(%s) failed with 0x%lx", path, fd);
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
 			if (SwapCreed)
-				SystemWrapper::Jail();
+				SystemWrapper::Jailbreak();
 #endif
-			return DirectoryEntries;
-		}
 
-		struct stat dirstat;
-		fstat(fd, &dirstat);
-
-		char* buffer = (char*)malloc(dirstat.st_blksize);
-
-		int usedbufferlen = 0;
-		int curpos = dirstat.st_blksize;
-
-		while (true)
-		{
-			if (curpos >= usedbufferlen)
+			int fd = open(path, O_RDONLY | O_DIRECTORY, 0000555);
+			if (fd < 0)
 			{
+				Notify("open(%s) failed with 0x%lx", path, fd);
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-				int ret = sceKernelGetdents(fd, buffer, dirstat.st_blksize);
-#else
-				int ret = getdents(fd, buffer, dirstat.st_blksize);
+				if (SwapCreed)
+					SystemWrapper::Jail();
 #endif
-				if (ret <= 0)
-				{
-					break;
-				}
-
-				usedbufferlen = ret;
-				curpos = 0;
+				return DirectoryEntries;
 			}
 
-			dirent *entry = (dirent*)(buffer + curpos);
-			curpos += entry->d_reclen;
+			struct stat dirstat;
+			fstat(fd, &dirstat);
 
-			if (strcasecmp(entry->d_name, ".") == 0 || strcasecmp(entry->d_name, "..") == 0)
-				continue;
+			char* buffer = (char*)malloc(dirstat.st_blksize);
 
-			if (UseFilter)
+			int usedbufferlen = 0;
+			int curpos = dirstat.st_blksize;
+
+			while (true)
 			{
-				// compare the extension and add it
-				std::string filename;
-				if (combine)
+				if (curpos >= usedbufferlen)
 				{
-					filename += (char*)path;
-					if (path[stringlen] != '/')
-						filename += "/";
+
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+					int ret = sceKernelGetdents(fd, buffer, dirstat.st_blksize);
+#else
+					int ret = getdents(fd, buffer, dirstat.st_blksize);
+#endif
+					if (ret <= 0)
+					{
+						break;
+					}
+
+					usedbufferlen = ret;
+					curpos = 0;
 				}
 
-				filename += entry->d_name;
+				dirent *entry = (dirent*)(buffer + curpos);
+				curpos += entry->d_reclen;
+
+				if (strcasecmp(entry->d_name, ".") == 0 || strcasecmp(entry->d_name, "..") == 0)
+					continue;
+
+				if (UseFilter)
+				{
+					// compare the extension and add it
+					std::string filename;
+					if (combine)
+					{
+						filename += (char*)path;
+						if (path[stringlen] != '/')
+							filename += "/";
+					}
+
+					filename += entry->d_name;
 
 
-				std::string ext = filename.substr(filename.size() - 4, 4);
+					std::string ext = filename.substr(filename.size() - 4, 4);
 
-				if (strcasecmp(ext.c_str(), extension) == 0)
+					if (strcasecmp(ext.c_str(), extension) == 0)
+					{
+						std::string m_string;
+						if (combine)
+						{
+							m_string = std::string(path);
+
+							if (path[stringlen] != '/')
+								m_string += "/";
+
+							m_string += entry->d_name;
+						}
+						else
+						{
+							m_string = entry->d_name;
+						}
+
+						DirectoryEntries.push_back(DirectoryEntry(m_string, entry->d_type, entry->d_fileno));
+					}
+				}
+				else
 				{
 					std::string m_string;
 					if (combine)
@@ -119,145 +144,125 @@ namespace OrbisFileSystem
 					{
 						m_string = entry->d_name;
 					}
-
 					DirectoryEntries.push_back(DirectoryEntry(m_string, entry->d_type, entry->d_fileno));
 				}
 			}
+
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+			if (SwapCreed)
+				SystemWrapper::Jail();
+#endif
+			close(fd);
+			free(buffer);
+
+			return DirectoryEntries;
+		}
+
+		bool		exists(const char* path, bool isDIR)
+		{
+			int fd = 0;
+
+			if (isDIR)
+				fd = open(path, O_RDONLY | O_DIRECTORY, 0);
+			else
+				fd = open(path, O_RDONLY, 0);
+
+			if (fd >= 0)
+			{
+				close(fd);
+				return true;
+			}
 			else
 			{
-				std::string m_string;
-				if (combine)
-				{
-					m_string = std::string(path);
-					
-					if (path[stringlen] != '/')
-						m_string += "/";
-
-					m_string += entry->d_name;
-				}
-				else
-				{
-					m_string = entry->d_name;
-				}
-				DirectoryEntries.push_back(DirectoryEntry(m_string, entry->d_type, entry->d_fileno));
+				return false;
 			}
 		}
 
+		bool		Mount(int rel)
+		{
+			bool ret = false;
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (SwapCreed)
-			SystemWrapper::Jail();
+			switch (rel)
+			{
+			case USB0:
+				ret = SystemWrapper::MountUSB(0);
+				break;
+			case USB1:
+				ret = SystemWrapper::MountUSB(1);
+				break;
+			case USB2:
+				ret = SystemWrapper::MountUSB(2);
+				break;
+			case USB3:
+				ret = SystemWrapper::MountUSB(3);
+				break;
+			case USB4:
+				ret = SystemWrapper::MountUSB(4);
+				break;
+			case USB5:
+				ret = SystemWrapper::MountUSB(5);
+				break;
+			case USB6:
+				ret = SystemWrapper::MountUSB(6);
+				break;
+			case USB7:
+				ret = SystemWrapper::MountUSB(7);
+				break;
+			default:
+				break;
+			}
 #endif
-		close(fd);
-		free(buffer);
-
-		return DirectoryEntries;
-	}
-
-	bool		exists(const char* path, bool isDIR)
-	{
-		int fd = 0;
-
-		if (isDIR)
-			fd = open(path, O_RDONLY | O_DIRECTORY, 0);
-		else
-			fd = open(path, O_RDONLY, 0);
-
-		if (fd >= 0)
-		{
-			close(fd);
-			return true;
+			return ret;
 		}
-		else
-		{
-			return false;
-		}
-	}
 
-	bool		Mount(int rel)
-	{
-		bool ret = false;
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		switch (rel)
+		bool		Unmount(int rel)
 		{
-		case USB0:
-			ret = SystemWrapper::MountUSB(0);
-			break;
-		case USB1:
-			ret = SystemWrapper::MountUSB(1);
-			break;
-		case USB2:
-			ret = SystemWrapper::MountUSB(2);
-			break;
-		case USB3:
-			ret = SystemWrapper::MountUSB(3);
-			break;
-		case USB4:
-			ret = SystemWrapper::MountUSB(4);
-			break;
-		case USB5:
-			ret = SystemWrapper::MountUSB(5);
-			break;
-		case USB6:
-			ret = SystemWrapper::MountUSB(6);
-			break;
-		case USB7:
-			ret = SystemWrapper::MountUSB(7);
-			break;
-		default:
-			break;
-		}
-#endif
-		return ret;
-	}
-
-	bool		Unmount(int rel)
-	{
-		bool ret = false;
+			bool ret = false;
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		switch (rel)
-		{
-		case USB0:
-			ret = SystemWrapper::UnmountUSB(0);
-			break;
-		case USB1:
-			ret = SystemWrapper::UnmountUSB(1);
-			break;
-		case USB2:
-			ret = SystemWrapper::UnmountUSB(2);
-			break;
-		case USB3:
-			ret = SystemWrapper::UnmountUSB(3);
-			break;
-		case USB4:
-			ret = SystemWrapper::UnmountUSB(4);
-			break;
-		case USB5:
-			ret = SystemWrapper::UnmountUSB(5);
-			break;
-		case USB6:
-			ret = SystemWrapper::UnmountUSB(6);
-			break;
-		case USB7:
-			ret = SystemWrapper::UnmountUSB(7);
-			break;
-		default:
-			break;
-		}
+			switch (rel)
+			{
+			case USB0:
+				ret = SystemWrapper::UnmountUSB(0);
+				break;
+			case USB1:
+				ret = SystemWrapper::UnmountUSB(1);
+				break;
+			case USB2:
+				ret = SystemWrapper::UnmountUSB(2);
+				break;
+			case USB3:
+				ret = SystemWrapper::UnmountUSB(3);
+				break;
+			case USB4:
+				ret = SystemWrapper::UnmountUSB(4);
+				break;
+			case USB5:
+				ret = SystemWrapper::UnmountUSB(5);
+				break;
+			case USB6:
+				ret = SystemWrapper::UnmountUSB(6);
+				break;
+			case USB7:
+				ret = SystemWrapper::UnmountUSB(7);
+				break;
+			default:
+				break;
+			}
 #endif
-		return ret;
-	}
+			return ret;
+		}
 
-	bool		PathExists(int reltype, const char* relpath, bool IsDirectory)
-	{
-		int  USBID  = -1;
-		bool FixUSB = false;
-		bool ret	= false;
-
-		char path[260] { 0 };
-
-		switch (reltype)
+		bool		PathExists(int reltype, const char* relpath, bool IsDirectory)
 		{
+			int  USBID = -1;
+			bool FixUSB = false;
+			bool ret = false;
+
+			char path[260]{ 0 };
+
+			switch (reltype)
+			{
 			case App:
 				sprintf(path, "/app0/%s", relpath);
 				break;
@@ -362,7 +367,7 @@ namespace OrbisFileSystem
 				sprintf(path, "/savedata9/%s", relpath);
 				break;
 			case SaveData10:
-				sprintf(path,"/savedata10/%s", relpath);
+				sprintf(path, "/savedata10/%s", relpath);
 				break;
 			case SaveData11:
 				sprintf(path, "/savedata11/%s", relpath);
@@ -394,31 +399,31 @@ namespace OrbisFileSystem
 			default:
 				sprintf(path, "/download0/%s", relpath);
 				break;
-		}
-		
-		if (reltype != Full)
-			ret = exists(path, IsDirectory);
+			}
+
+			if (reltype != Full)
+				ret = exists(path, IsDirectory);
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if (FixUSB && USBID != -1)
-			SystemWrapper::UnmountUSB(USBID);
+			if (FixUSB && USBID != -1)
+				SystemWrapper::UnmountUSB(USBID);
 #endif
-		return ret;
-	}
+			return ret;
+		}
 
-	bool		CreateFullPath(char* buffer, int reltype, const char* Relpath, ...)
-	{
-		if (!buffer)
-			return false;
-
-		char tempbuffer[260];
-		va_list args;
-		va_start(args, Relpath);
-		size_t lenght = SystemWrapper::vsprintf(tempbuffer, Relpath, args);
-		va_end(args);
-
-		switch (reltype)
+		bool		CreateFullPath(char* buffer, int reltype, const char* Relpath, ...)
 		{
+			if (!buffer)
+				return false;
+
+			char tempbuffer[260];
+			va_list args;
+			va_start(args, Relpath);
+			size_t lenght = SystemWrapper::vsprintf(tempbuffer, Relpath, args);
+			va_end(args);
+
+			switch (reltype)
+			{
 			case App:
 				sprintf(buffer, "%s%s", "/app0/", tempbuffer);
 				break;
@@ -513,111 +518,112 @@ namespace OrbisFileSystem
 				sprintf(buffer, "%s%s", "/_mira/", tempbuffer);
 				break;
 			default:
-				MessageHandler::KernelPrintOut("Invailed Path type, overwriting with download");
+				KernelPrintOut("Invailed Path type, overwriting with download");
 				sprintf(buffer, "%s%s", "/download0/", tempbuffer);
+			}
+			return true;
 		}
-		return true;
-	}
 
-	size_t		CreateString(char* buffer, const char* MessageFMT, ...)
-	{
-		va_list args;
-		va_start(args, MessageFMT);
-		size_t length = SystemWrapper::vsprintf(buffer, MessageFMT, args);
-		va_end(args);
-		return length;
-	}
-
-	bool		CreateDirectoryPath(char* path)
-	{
-		char buf[260]{ 0 };
-
-		size_t strsize = strlen(path);
-
-		for (int i = 0; i < strsize; i++)
+		size_t		CreateString(char* buffer, const char* MessageFMT, ...)
 		{
-			if (path[i] == '/' || path[i] == '\\')
+			va_list args;
+			va_start(args, MessageFMT);
+			size_t length = SystemWrapper::vsprintf(buffer, MessageFMT, args);
+			va_end(args);
+			return length;
+		}
+
+		bool		CreateDirectoryPath(char* path)
+		{
+			char buf[260]{ 0 };
+
+			size_t strsize = strlen(path);
+
+			for (int i = 0; i < strsize; i++)
 			{
-				unlink(buf);
-				mkdir(buf, 0000777);
+				if (path[i] == '/' || path[i] == '\\')
+				{
+					unlink(buf);
+					mkdir(buf, 0000777);
+				}
+
+				buf[i] = path[i];
 			}
 
-			buf[i] = path[i];
+			return true;
 		}
 
-		return true;
-	}
-
-	const char* GetFilenameFromPath(const char* path)
-	{
-		if (!path)
-			return NULL;
-
-		const char* newstr = strrchr(path, '/');
-		if (!newstr)
-			return NULL;
-
-		newstr++;
-
-		return newstr;
-	}
-
-	void		WriteFileToDisk(int reltype, const char* path, const void* data, size_t length)
-	{
-		if (!data || !length)
-			return;
-
-		int ret = 0;
-		int fd = 0;
-
-		char buffer[260]{ 0 };
-
-
-		Mount(reltype);
-
-		if (reltype == Full)
+		const char* GetFilenameFromPath(const char* path)
 		{
-			OrbisFileSystem::CreateDirectoryPath((char*)path);
-			fd = open(path, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+			if (!path)
+				return NULL;
+
+			const char* newstr = strrchr(path, '/');
+			if (!newstr)
+				return NULL;
+
+			newstr++;
+
+			return newstr;
 		}
-		else
+
+		void		WriteFileToDisk(int reltype, const char* path, const void* data, size_t length)
 		{
-			CreateFullPath(buffer, reltype, path);
-			OrbisFileSystem::CreateDirectoryPath(buffer);
-			fd = open(buffer, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+			if (!data || !length)
+				return;
+
+			int ret = 0;
+			int fd = 0;
+
+			char buffer[260]{ 0 };
+
+
+			Mount(reltype);
+
+			if (reltype == Full)
+			{
+				FileSystem::CreateDirectoryPath((char*)path);
+				fd = open(path, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+			}
+			else
+			{
+				CreateFullPath(buffer, reltype, path);
+				FileSystem::CreateDirectoryPath(buffer);
+				fd = open(buffer, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+			}
+
+			if (fd <= 0)
+			{
+				KernelPrintOut("Failed to open [%for R/W", (reltype == Full ? path : buffer));
+				return;
+			}
+
+			if ((ret = write(fd, data, length)) != length)
+				KernelPrintOut("Failed to write to [%fd[0x%lx] ret [0x%lx] length [0x%lx]", (reltype == Full ? path : buffer), fd, ret, length);
+
+			close(fd);
+			Unmount(reltype);
 		}
 
-		if (fd <= 0)
+		bool		Dump(const char* TypeName, void* base, int size)
 		{
-			MessageHandler::KernelPrintOut("Failed to open [%for R/W", (reltype == Full ? path : buffer));
-			return;
-		}
-
-		if ((ret = write(fd, data, length)) != length)
-			MessageHandler::KernelPrintOut("Failed to write to [%fd[0x%lx] ret [0x%lx] length [0x%lx]", (reltype == Full ? path : buffer), fd, ret, length);
-
-		close(fd);
-		Unmount(reltype);
-	}
-
-	bool		Dump(const char* TypeName, void* base, int size)
-	{
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		char path[260]{ 0 };
-		SceRtcDateTime now;
+			char path[260]{ 0 };
+			SceRtcDateTime now;
 
-		SystemWrapper::UpdateRTC(&now);
-		sprintf(path, "DUMPS/%s%d%d%d%d%d.dump", TypeName, now.day, now.hour, now.minute, now.second, now.microsecond);
+			SystemWrapper::UpdateRTC(&now);
+			sprintf(path, "DUMPS/%s%d%d%d%d%d.dump", TypeName, now.day, now.hour, now.minute, now.second, now.microsecond);
 
-		if (OrbisFileSystem::PathExists(OrbisFileSystem::USB0, "DUMMY/dummy.txt", false))
-			OrbisFileSystem::WriteFileToDisk(OrbisFileSystem::USB0, path, base, size);
+			if (FileSystem::PathExists(FileSystem::USB0, "DUMMY/dummy.txt", false))
+				FileSystem::WriteFileToDisk(FileSystem::USB0, path, base, size);
 
-		else if (OrbisFileSystem::PathExists(OrbisFileSystem::USB1, "DUMMY/dummy.txt", false))
-			OrbisFileSystem::WriteFileToDisk(OrbisFileSystem::USB1, path, base, size);
+			else if (FileSystem::PathExists(FileSystem::USB1, "DUMMY/dummy.txt", false))
+				FileSystem::WriteFileToDisk(FileSystem::USB1, path, base, size);
 
-		return true;
+			return true;
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
-		return true;
+			return true;
 #endif
+		}
 	}
 }

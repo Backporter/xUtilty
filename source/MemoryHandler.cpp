@@ -1,13 +1,11 @@
 #include "../include/MemoryHandler.h"
 
+//
 #include "../include/SystemWrapper.h"
-#include "../include/MemoryHandler.h"
 #include "../include/MessageHandler.h"
 #include "../include/Macro.h"
 
-#include <stdint.h>
-
-namespace OrbisMemoryHandler
+namespace xUtilty
 {
 	void DumpRegisters()
 	{
@@ -105,14 +103,14 @@ namespace OrbisMemoryHandler
 		__asm volatile("mov %%r14b, %[Var]" : [Var] "=r" (r14b));
 		__asm volatile("mov %%r15b, %[Var]" : [Var] "=r" (r15b));
 
-		MessageHandler::KernelPrintOut(
-			"\n\n# rax: %016lx rbx: %016lx\n# rcx: %016lx rdx: %016lx\n# rsi: %016lx rdi: %016lx\n# rbp: %016lx rsp: %016lx\n# r8:  %016lx r9:  %016lx\n# r10: %016lx r11: %016lx\n# r12: %016lx r13: %016lx\n# r14: %016lx r15: %016lx\n# rip: %016lx eflags: %08x\n# BrF: %016lx BrT: %016lx" 
+		KernelPrintOut(
+			"\n\n# rax: %016lx rbx: %016lx\n# rcx: %016lx rdx: %016lx\n# rsi: %016lx rdi: %016lx\n# rbp: %016lx rsp: %016lx\n# r8:  %016lx r9:  %016lx\n# r10: %016lx r11: %016lx\n# r12: %016lx r13: %016lx\n# r14: %016lx r15: %016lx\n# rip: %016lx eflags: %08x\n# BrF: %016lx BrT: %016lx"
 			"\n\n# eax: %016x ebx: %016x\n# ecx: %016x edx: %016x\n# esi: %016x edi: %016x\n# ebp: %016x esp: %016x\n# r8d: %016x r9d: %016x\n# r10d: %016x r11d: %016x\n# r12d: %016x r13d: %016x\n# r14d: %016x r15d: %016x\n\n"
-			"\n\n# xmm0: %f xmm1: %f\n# xmm2: %f xmm3: %f\n# xmm4: %f xmm5: %f\n# xmm6: %f xmm7: %f\n# xmm8: %f xmm9: %f\n# xmm10: %f xmm11: %f\n# xmm12: %f xmm13: %f\n# xmm14: %f xmm15: %f", 
+			"\n\n# xmm0: %f xmm1: %f\n# xmm2: %f xmm3: %f\n# xmm4: %f xmm5: %f\n# xmm6: %f xmm7: %f\n# xmm8: %f xmm9: %f\n# xmm10: %f xmm11: %f\n# xmm12: %f xmm13: %f\n# xmm14: %f xmm15: %f",
 			rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14, r15, rip, eflags, BrF, BrT, // 64-bit
 			eax, ebx, ecx, edx, esi, edi, ebp, esp, r8d, r9d, r10d, r11d, r12d, r13d, r14d, r15d,				 // 32-bit
 			xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15 // xmmX
-			);
+		);
 	}
 
 	void safe_write(uint64_t dst, const void* src, size_t len)
@@ -123,7 +121,7 @@ namespace OrbisMemoryHandler
 			int32_t ret = SystemWrapper::QueryMemoryProtection((void*)dst, NULL, NULL, &prot);
 			if (ret)
 			{
-				MessageHandler::KernelPrintOut("SystemWrapper::QueryMemoryProtection(0x%lx, NULL, NULL, &prot) failed with 0x%x", dst, ret);
+				KernelPrintOut("SystemWrapper::QueryMemoryProtection(0x%lx, NULL, NULL, &prot) failed with 0x%x", dst, ret);
 				return;
 			}
 
@@ -146,7 +144,7 @@ namespace OrbisMemoryHandler
 
 			if (ret)
 			{
-				MessageHandler::KernelPrintOut("SystemWrapper::QueryMemoryProtection(0x%lx, NULL, NULL, &prot) failed with 0x%x", src, ret);
+				KernelPrintOut("SystemWrapper::QueryMemoryProtection(0x%lx, NULL, NULL, &prot) failed with 0x%x", src, ret);
 				return;
 			}
 

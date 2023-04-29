@@ -1,10 +1,11 @@
 #pragma once
+
 #include <stdint.h>
 
-#if defined(__ORBIS__)
-typedef wchar_t wchar_t_t;
-#elif defined(__OPENORBIS__)
-typedef uint16_t wchar_t_t;
-#elif defined(__SWITCH__)
-typedef wchar_t wchar_t_t;
+#if __ORBIS__
+using wchar_t_t = wchar_t;
+#elif __OPENORBIS__
+using wchar_t_t = uint16_t;
+#else
+using wchar_t_t = wchar_t;
 #endif

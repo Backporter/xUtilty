@@ -1,11 +1,11 @@
 #pragma once
 
-#if defined(__OPENORBIS__)
+#if __OPENORBIS__
 #include <orbis/libkernel.h>
 #include <orbis/Rtc.h>
 #include <sys/types.h>
 #include "SafeTypes.h"
-#elif defined(__ORBIS__)
+#elif __ORBIS__
 #include <kernel.h>
 #include <rtc.h>
 #include <sys/types.h>

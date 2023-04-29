@@ -1,15 +1,14 @@
 #pragma once
 
 #include <stdint.h>
-#include <vector>
 
-namespace RelocationManager
+namespace xUtilty
 {
 	class RelocationManager
 	{
 	public:
 		RelocationManager();
-		
+
 		// "eboot.bin"
 		static uintptr_t ApplicationBaseAddress;
 	};

@@ -1,15 +1,15 @@
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-#include <stdint.h>
-#include "../include/INIHandler.h"
-#include "../include/MessageHandler.h"
-#include "../include/SystemWrapper.h"
+
 #include "../include/Mira.h"
+#include "../include/SystemWrapper.h"
 
 #if defined(__ORBIS__)
 #include <kernel.h>
 #elif defined(__OPENORBIS__)
 #include <orbis/libkernel.h>
 #endif
+
+#include <stdint.h>
 
 namespace OrbisMiraHandler
 {
@@ -32,7 +32,7 @@ namespace OrbisMiraHandler
 			return std::vector<ProcessModuleList::Module>();
 		}
 
-		auto s_Ret = SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_MODULE_LIST, &s_Ioctl);
+		auto s_Ret = xUtilty::SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_MODULE_LIST, &s_Ioctl);
 		if (s_Ret != 0)
 		{
 			return std::vector<ProcessModuleList::Module>();
@@ -93,7 +93,7 @@ namespace OrbisMiraHandler
 			.OutputSize = p_Size
 		};
 
-		auto s_Ret = SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_READ_MEMORY, &s_Ioctl);
+		auto s_Ret = xUtilty::SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_READ_MEMORY, &s_Ioctl);
 		if (s_Ret != 0)
 		{
 			close(m_DriverHandle);
@@ -134,7 +134,7 @@ namespace OrbisMiraHandler
 			.OutputSize = 0
 		};
 
-		auto s_Ret = SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_WRITE_MEMORY, &s_Ioctl);
+		auto s_Ret = xUtilty::SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_WRITE_MEMORY, &s_Ioctl);
 		if (s_Ret != 0)
 		{
 			close(m_DriverHandle);
@@ -169,7 +169,7 @@ namespace OrbisMiraHandler
 			.OutputSize = 0
 		};
 
-		auto s_Ret = SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_PROTECT_MEMORY, &s_Ioctl);
+		auto s_Ret = xUtilty::SystemWrapper::ioctl(m_DriverHandle, MIRA_PROCESS_PROTECT_MEMORY, &s_Ioctl);
 		if (s_Ret != 0)
 		{
 			close(m_DriverHandle);
@@ -183,7 +183,6 @@ namespace OrbisMiraHandler
 
 	uintptr_t GetBaseAddress(const char* path)
 	{
-		int ret = 0;
 		uintptr_t addr = 0x400000;
 
 		if (g_processmodulelist.size() <= 0)
@@ -202,7 +201,7 @@ namespace OrbisMiraHandler
 		{
 			if (strcasecmp(l_Module.Path, path) == 0)
 			{
-				MessageHandler::KernelPrintOut("va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
+				xUtilty::KernelPrintOut("va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
 				addr = (uintptr_t)l_Module.ReallocBase;
 				break;
 			}

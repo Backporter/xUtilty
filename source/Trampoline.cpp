@@ -1,6 +1,9 @@
 #include "../include/Trampoline.h"
+
 #include "../include/RelocationManager.h"
-#include "../include/Macro.h"
+#include "../include/Logger.h"
+#include "../include/SystemWrapper.h"
+#include "../include/RelocationManager.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -13,114 +16,95 @@
 #include <orbis/libkernel.h>
 #endif
 
-namespace Trampoline
+namespace xUtilty
 {
-	Trampoline::Trampoline() : SystemAllocatedMemory(0), SystemAllocatedLength(0), SystemAllocatedOffset(0), AllocSysAllocLen(0), AllocSysAllocAddr(0) {}
-
-	Trampoline::~Trampoline() { SystemDeallocate(); }
-
-	bool Trampoline::SystemAllocate(size_t TrampolineSize, size_t alignment)
+	void Trampoline::default_deallocator(void* a_data, size_t a_size, int64_t a_physicalAddress)
 	{
-		int32_t ret = 0;
-
-		if ((ret = sceKernelAllocateDirectMemory(0, sceKernelGetDirectMemorySize(), TrampolineSize, alignment, 0, &SystemAllocatedOffset)) != 0)
+		if (a_data)
 		{
-			MessageHandler::Notify("Failed to allocate Direct Memory! sceKernelAllocateDirectMemory failed 0x%08X", ret);
+			SystemWrapper::ReleaseDirectMemory(a_physicalAddress, a_size);
+		}
+	}
+
+	Trampoline::~Trampoline() 
+	{ 
+		release();
+	}
+
+	bool Trampoline::create(size_t a_size, size_t a_alignment, deallocator_t* a_freefunc, void* a_pModuleBase)
+	{
+		// invalid size, break.
+		if (a_size == 0)
+			return false;
+
+		if (SystemWrapper::AllocateDirectMemory(0, SystemWrapper::GetDirectMemorySize(), a_size, a_alignment, 0, m_physicalAddress))
+		{
+			Log::GetSingleton(Log::LoggerInstance::KModuleLog)->Write("[Fatal Error] Failed to Allocate memory for Trampoline [%s:%s:%d", __FILE__, __FUNCTION__, __LINE__);
 			return false;
 		}
 
-		SystemAllocatedMemory = reinterpret_cast<void*>(RelocationManager::RelocationManager::ApplicationBaseAddress == 0 ? 0x400000 : RelocationManager::RelocationManager::ApplicationBaseAddress);
+		if (a_pModuleBase)
+			m_data = reinterpret_cast<uint8_t*>(a_pModuleBase);
+		else
+			m_data = reinterpret_cast<uint8_t*>(RelocationManager::ApplicationBaseAddress);
 
-		if ((ret = sceKernelMapDirectMemory(&SystemAllocatedMemory, TrampolineSize, 0x02, 0, SystemAllocatedOffset, TrampolineSize)) != 0)
+		if (a_freefunc)
+			m_deallocator = a_freefunc;
+		else
+			m_deallocator = default_deallocator;
+
+		if (SystemWrapper::MapDirectMemory((void**)&m_data, a_size, 0x02, 0, m_physicalAddress, a_size))
 		{
-			MessageHandler::Notify("Failed To Map Direct Memory! sceKernelMapDirectMemory returned %lx", ret);
+			Log::GetSingleton(Log::LoggerInstance::KModuleLog)->Write("[Fatal Error] Failed to map memory for Trampoline [%s:%s:%d", __FILE__, __FUNCTION__, __LINE__);
 			return false;
 		}
 
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
-		if ((ret = sceKernelMprotect(SystemAllocatedMemory, TrampolineSize, VM_PROT_ALL)) != 0)
+		if (SystemWrapper::Mprotect((const void*)m_data, a_size, VM_PROT_ALL))
 		{
-			MessageHandler::Notify("Failed to change protection![this is fatal]... sceKernelMprotect returned %lx", ret);
+			Log::GetSingleton(Log::LoggerInstance::KModuleLog)->Write("[Fatal Error] Failed to Mprotect memory for Trampoline [%s:%s:%d", __FILE__, __FUNCTION__, __LINE__);
 			return false;
 		}
-#endif
-		SystemAllocatedLength = TrampolineSize;
-		AllocSysAllocLen = 0;
-		return SystemAllocatedMemory != NULL && ret == 0;
+
+		m_capacity = a_size;
+		m_size = 0;
+
+		return true;
 	}
 
-	void Trampoline::SystemDeallocate()
+	void* Trampoline::allocate(size_t a_size)
 	{
-		if (SystemAllocatedMemory)
-		{
-			sceKernelReleaseDirectMemory(SystemAllocatedOffset, SystemAllocatedLength);
-			SystemAllocatedMemory = NULL;
-		}
+		auto mem = m_data + m_size;
+		m_size += a_size;
+		log_usage();
+		return mem;
 	}
 
-	void Trampoline::SystemRestore(off_t src, size_t src_len)
+	void* Trampoline::allocate(Xbyak::CodeGenerator& a_code)
 	{
-		assert(sceKernelReleaseDirectMemory(src, src_len) == 0);
+		auto mem = allocate(a_code.getSize());
+		log_usage();
+		memcpy(mem, a_code.getCode(), a_code.getSize());
+		return mem;
 	}
 
-	void* Trampoline::StartTake()
+	void Trampoline::log_usage()
 	{
-		assert(SystemAllocatedMemory);
-		assert(!AllocSysAllocAddr);
+		auto pct = (static_cast<double>(m_size) / static_cast<double>(m_capacity)) * 100.0;
 
-		AllocSysAllocAddr = ((uint8_t *)SystemAllocatedMemory) + AllocSysAllocLen;
-
-		return AllocSysAllocAddr;
-	}
-
-	void  Trampoline::RestoreAllocated(const void* allocated)
-	{
-		assert(SystemAllocatedMemory);
-		assert(AllocSysAllocAddr);
-
-		size_t len = uintptr_t(allocated) - uintptr_t(AllocSysAllocAddr);
-		assert(len <= Remain());
-
-		AllocSysAllocLen += len;
-		AllocSysAllocAddr = nullptr;
-	}
-
-	void* Trampoline::Take(size_t size)
-	{
-		assert(SystemAllocatedMemory);
-
-		void * result = nullptr;
-
-		if (size <= Remain())
-		{
-			result = ((uint8_t *)SystemAllocatedMemory) + AllocSysAllocLen;
-			AllocSysAllocLen += size;
-		}
-
-		return result;
-	}
-
-	void* Trampoline::allocate(Xbyak::CodeGenerator& code)
-	{
-		size_t length = code.getSize();
-		void* codebuf = Take(length);
-		memcpy(codebuf, code.getCode(), length);
-		return codebuf;
+		Log::GetSingleton(Log::KModuleLog)->Write("%zu / %zu (%f)", m_size, m_capacity, pct);
 	}
 
 	void* Trampoline::allocatePlugin(size_t a_handle, size_t a_size)
 	{
-		auto alloc = Take(a_size);
+		void* alloc = allocate(a_size);
 		if (alloc)
 		{
-			std::lock_guard<decltype(m_mapLock)> locker(m_mapLock);
+			std::lock_guard<std::mutex> locker(m_PluginMaplock);
 
 			auto entry = m_PluginMap.find(a_handle);
 			if (entry == m_PluginMap.end())
 			{
 				auto insert = m_PluginMap.insert(std::make_pair(a_handle, a_size));
-				assert(insert.second);
 			}
 			else
 			{
@@ -129,16 +113,9 @@ namespace Trampoline
 		}
 		else
 		{
-			assert(false);
+			Log::GetSingleton(Log::KModuleLog)->Write("Failed to allocate %Iu for %Iu", a_size, a_handle);
 		}
 
 		return alloc;
 	}
-
-	void Trampoline::restorePlugin(size_t a_handle, void* a_allocated, size_t a_size)
-	{
-
-	}
-
-	Trampoline g_Trampoline;
 }

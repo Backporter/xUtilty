@@ -33,7 +33,7 @@ namespace
 				return true;
 			}
 
-			MessageHandler::KernelPrintOut("invaled handle(0x%lx) passed to IFileStream::IFileStream(handle_t,int32_t)", a_handle);
+			xUtilty::KernelPrintOut("invaled handle(0x%lx) passed to IFileStream::IFileStream(handle_t,int32_t)", a_handle);
 			return false;
 		}
 
@@ -96,7 +96,7 @@ namespace
 				return true;
 			}
 
-			MessageHandler::KernelPrintOut("[0x%lx] [%[%[0x%lx] [0000777]", m_handle, a_path, strerror(errno), s_openflags);
+			xUtilty::KernelPrintOut("[0x%lx] [%[%[0x%lx] [0000777]", m_handle, a_path, strerror(errno), s_openflags);
 			return false;
 		}
 
@@ -125,7 +125,7 @@ namespace
 				}
 				else
 				{
-					MessageHandler::KernelPrintOut("IFileStream::Read(void*,size_t) failed with (%s)", strerror(errno));
+					xUtilty::KernelPrintOut("IFileStream::Read(void*,size_t) failed with (%s)", strerror(errno));
 					return -1;
 				}
 			}
@@ -138,7 +138,7 @@ namespace
 			if (m_handle > 0 && a_buff && a_len)
 			{
 				if (write(m_handle, a_buff, a_len) != a_len)
-					MessageHandler::KernelPrintOut("IFileStream::Write(void*,size_t) failed with (%s)", strerror(errno));
+					xUtilty::KernelPrintOut("IFileStream::Write(void*,size_t) failed with (%s)", strerror(errno));
 				else
 					m_streamPosition += a_len;
 			}
@@ -157,7 +157,7 @@ namespace
 				}
 				else
 				{
-					MessageHandler::KernelPrintOut("IFileStream::Seek(int64_t,int) failed with (%d %s)", s_ret, strerror(errno));
+					xUtilty::KernelPrintOut("IFileStream::Seek(int64_t,int) failed with (%d %s)", s_ret, strerror(errno));
 					return -1;
 				}
 				
@@ -169,7 +169,7 @@ namespace
 		void	Flush() override 
 		{
 			if (fsync(m_handle) < 0)
-				MessageHandler::KernelPrintOut("IFileStream::Flush() failed with (%s)", strerror(errno));
+				xUtilty::KernelPrintOut("IFileStream::Flush() failed with (%s)", strerror(errno));
 		}
 
 		void	Truncate(int64_t a_size)
@@ -180,7 +180,7 @@ namespace
 			{
 				if ((ret = ftruncate(m_handle, a_size)) != 0)
 				{
-					MessageHandler::KernelPrintOut("ftruncate failed with %d(%s)", ret, strerror(errno));
+					xUtilty::KernelPrintOut("ftruncate failed with %d(%s)", ret, strerror(errno));
 				}
 				else
 					m_streamPosition = a_size;

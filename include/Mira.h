@@ -69,24 +69,23 @@ namespace OrbisMiraHandler
 	{
 		typedef struct _Module
 		{
-			uint64_t Handle;
-			void* MapBase;
-			uint64_t MapSize;
-			uint64_t TextSize;
-			void* DataBase;
-			uint64_t DataSize;
-			void* VirtualAddressBase;
-			void* ReallocBase;
-			void* Entry;
-			void* PltGot;
-			int32_t Status;
-			int32_t Flags;
-			char Path[260];
-
+			uint64_t	Handle;
+			void*		MapBase;
+			uint64_t	MapSize;
+			uint64_t	TextSize;
+			void*		DataBase;
+			uint64_t	DataSize;
+			void*		VirtualAddressBase;
+			void*		ReallocBase;
+			void*		Entry;
+			void*		PltGot;
+			int32_t		Status;
+			int32_t		Flags;
+			char		Path[260];
 		} Module;
 
-		Module* Modules;
-		uint64_t ModuleCount;
+		Module*		Modules;
+		uint64_t	ModuleCount;
 	} ProcessModuleList;
 	static_assert(sizeof(_ProcessModuleList) != 0, "Mira's Structure Mis-match");
 

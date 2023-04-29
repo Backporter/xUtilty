@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <array>
 
-namespace OrbisMemoryHandler
+namespace xUtilty
 {
 	void DumpRegisters();
 

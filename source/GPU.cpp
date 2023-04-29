@@ -1,23 +1,20 @@
 #include "../include/GPU.h"
 
-#if defined(__ORBIS__)
-#include <kernel.h>
-#include <gnmx.h>
-#include <gnm.h>
-#include <gpu_address.h>
-#elif defined (__OPENORBIS__)
-#include <orbis/libkernel.h>
-#endif
+//
+#include "../include/SystemWrapper.h"
 
-namespace GPU
+namespace xUtilty
 {
-	uint64_t GetFrequency()
+	namespace GPU
 	{
+		uint64_t GetFrequency()
+		{
 #if defined(__ORBIS__)
-		uint64_t ret = sce::Gnm::getGpuCoreClockFrequency();
+			uint64_t ret = SystemWrapper::getGpuCoreClockFrequency();
 #else
-		uint64_t ret = 0;
+			uint64_t ret = 0;
 #endif	
-		return ret;
+			return ret;
+		}
 	}
 }

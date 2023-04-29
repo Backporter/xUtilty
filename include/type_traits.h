@@ -2,12 +2,19 @@
 
 #include <type_traits>
 #include <string>
-#include <xstddef>
+#include <stddef.h>
+#include "Macro.h"
+
+// if C++ version < c++14, error and write out the version.
+#if __cplusplus < 201402
+PRINT_CPPVERSION(__cplusplus);
+#endif
 
 // _t/_v of C++/+=14 types.
 namespace std
 {
 	// _t:
+#if __cplusplus < 201402
 	template <bool _Test, class _Ty>
 	using enable_if_t = typename enable_if<_Test, _Ty>::type;
 
@@ -23,30 +30,39 @@ namespace std
 	template <class T>
 	using underlying_type_t = typename underlying_type<T>::type;
 
-	template <class T>
-	using result_of_t = typename result_of<T>::type;
-
 	template<bool _Test, class _Ty1, class _Ty2>
 	using conditional_t = typename conditional<_Test, _Ty1, _Ty2>::type;
+#endif
 
-	template< size_t Len, size_t Align>
-	using aligned_storage_t = typename aligned_storage<Len, Align>::type;
-
+#if __cplusplus < 201703
+	// c++17
 	template <bool B>
 	using bool_constant = integral_constant<bool, B>;
 
 	template<class...>
 	using void_t = void;
+#endif
 
+#if __cplusplus < 201402
+	// c++14 but deprecated in C++17+
+	template <class T>
+	using result_of_t = typename result_of<T>::type;
+
+	// c++14 but deprecated in C++23+
+	template< size_t Len, size_t Align>
+	using aligned_storage_t = typename aligned_storage<Len, Align>::type;
+#endif
+
+#if __cplusplus < 201703
 	// _v:
+	template<class _From, class _To>
+	inline constexpr bool is_convertible_v = is_convertible<_From, _To>::value;
+
 	template< class T>
 	inline constexpr size_t tuple_size_v = tuple_size<T>::value;
 
 	template<class _Ty, class _Uty>
 	inline constexpr bool is_same_v = is_same<_Ty, _Uty>::value;
-
-	template<class _From, class _To>
-	inline constexpr bool is_convertible_v = is_convertible<_From, _To>::value;
 
 	template< class T >
 	inline constexpr bool is_enum_v = is_enum<T>::value;
@@ -77,8 +93,11 @@ namespace std
 
 	template< class T >
 	inline constexpr bool is_empty_v = is_empty<T>::value;
+#endif
 }
 
+// if C++ version < C++17
+#if __cplusplus < 201703
 // C++17 type_traits.
 namespace std
 {
@@ -128,6 +147,7 @@ namespace std
 	};
 
 }
+#endif
 
 namespace std
 {
@@ -150,7 +170,6 @@ namespace std
 	struct is_not_pointer : negation<is_pointer<T>>
 	{
 	};
-
 
 	// add custom.
 	template <class T>
@@ -263,11 +282,23 @@ namespace std
 	using decay_pointer_t = typename decay_pointer<T>::type;
 
 	// _v:
+#if __cplusplus < 201703
 	template< class B>
 	inline constexpr bool negation_v = negation<B>::value;
 
 	template <class... _Traits>
 	inline constexpr bool disjunction_v = disjunction<_Traits...>::value;
+
+	template <class T>
+	inline constexpr bool is_integral_v = is_integral<T>::value;
+
+	template <class T>
+	inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
+
+	template< class... B >
+	inline constexpr bool conjunction_v = conjunction<B...>::value;
+#endif
+
 
 	template <class T>
 	inline constexpr bool is_integer_v = is_integer<T>::value;
@@ -277,12 +308,6 @@ namespace std
 
 	template <class T>
 	inline constexpr bool is_unsigned_integral_v = is_unsigned_integral<T>::value;
-
-	template <class T>
-	inline constexpr bool is_integral_v = is_integral<T>::value;
-
-	template <class T>
-	inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
 
 	template <class T>
 	inline constexpr bool is_boolean_v = is_boolean_<T>::value;
@@ -323,6 +348,4 @@ namespace std
 	template <class T>
 	inline constexpr bool is_not_pointer_v = is_not_pointer<T>::value;
 
-	template< class... B >
-	inline constexpr bool conjunction_v = conjunction<B...>::value;
 }

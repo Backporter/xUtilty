@@ -10,18 +10,21 @@
 #include <orbis/libkernel.h>
 #endif
 
-namespace FrameUtil
+namespace xUtilty
 {
-	void FrameUtil::Tracker::Update()
+	namespace FrameUtil
 	{
+		void Tracker::Update()
+		{
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
-		float time     = (float)((sceKernelGetProcessTimeCounter() * 1000.0f) / sceKernelGetProcessTimeCounterFrequency());
+			float time = (float)((sceKernelGetProcessTimeCounter() * 1000.0f) / sceKernelGetProcessTimeCounterFrequency());
 #else
-		float time     = 0;
+			float time = 0;
 #endif
-		FrameDeltaTime = (float)(time - FrameDelta);
-		FrameTime      = (FrameDeltaTime / 1000.0f);
-		FrameRate      = 1.0f / FrameTime;
-		FrameDelta     = time;
+			FrameDeltaTime = (float)(time - FrameDelta);
+			FrameTime = (FrameDeltaTime / 1000.0f);
+			FrameRate = 1.0f / FrameTime;
+			FrameDelta = time;
+		}
 	}
 }

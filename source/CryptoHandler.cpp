@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <iostream>
-#include <string>
-
 #include "../include/CryptoHandler.h"
 
 const uint32_t CRC32Table[] = 
@@ -51,28 +47,33 @@ const uint32_t CRC32Table[] =
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint32_t CryptoHandler::GetCRC32(const char* a_str, uint32_t a_start)
+namespace xUtilty
 {
-	uint32_t Hash = ~a_start;
-
-	for (size_t i = 0; i < strlen(a_str); i++)
+	namespace CryptoHandler
 	{
-		Hash = (Hash >> 8) ^ CRC32Table[a_str[i] ^ (Hash & 0xFF)];
+		uint32_t GetCRC32(const char* a_str, uint32_t a_start)
+		{
+			uint32_t Hash = ~a_start;
+
+			for (size_t i = 0; i < strlen(a_str); i++)
+			{
+				Hash = (Hash >> 8) ^ CRC32Table[a_str[i] ^ (Hash & 0xFF)];
+			}
+
+			return ~Hash;
+		}
+
+
+		void GetCRC32(uint32_t& a_out, const char* a_str, uint32_t a_start)
+		{
+			uint32_t Hash = ~a_start;
+
+			for (size_t i = 0; i < strlen(a_str); i++)
+			{
+				Hash = (Hash >> 8) ^ CRC32Table[a_str[i] ^ (Hash & 0xFF)];
+			}
+
+			a_out = ~Hash;
+		}
 	}
-
-	return ~Hash;
 }
-
-
-void CryptoHandler::GetCRC32(uint32_t& a_out, const char* a_str, uint32_t a_start)
-{
-	uint32_t Hash = ~a_start;
-
-	for (size_t i = 0; i < strlen(a_str); i++)
-	{
-		Hash = (Hash >> 8) ^ CRC32Table[a_str[i] ^ (Hash & 0xFF)];
-	}
-
-	a_out = ~Hash;
-}
-

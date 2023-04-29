@@ -4,7 +4,7 @@
 #include "stl.h"
 
 #include "RelocationManager.h"
-#include "OrbisOffsertManger.h"
+#include "OffsertManger.h"
 #include "MemoryHandler.h"
 
 #include <stdio.h>
@@ -160,7 +160,7 @@ namespace REL
 
 		uintptr_t address() const 
 		{ 
-			return offset() + RelocationManager::RelocationManager::ApplicationBaseAddress; 
+			return offset() + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress;
 		}
 	public:
 		size_t m_offset{ 0 };
@@ -195,7 +195,7 @@ namespace REL
 		constexpr Relocation() noexcept = default;
 
 		constexpr Relocation(uintptr_t a_offset) noexcept :
-			m_offset{ a_offset + RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
 		{}
 
 		// constexpr Relocation(Offset a_offset) noexcept :
@@ -203,7 +203,7 @@ namespace REL
 		// {}
 
 		constexpr Relocation(uint32_t a_id, uintptr_t a_offset) :
-			m_offset{ a_offset + RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
 		{}
 
 		// constexpr Relocation(ID a_id, Offset a_offset) :
@@ -211,7 +211,7 @@ namespace REL
 		// {}
 
 		constexpr Relocation(uint32_t a_id, uint32_t a_id2, uintptr_t a_offset) :
-			m_offset{ a_offset + RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
 		{}
 
 		//constexpr Relocation(ID a_id, ID a_id2, Offset a_offset) :
@@ -259,7 +259,7 @@ namespace REL
 		}
 
 		constexpr uintptr_t address() const noexcept { return m_offset; }
-		size_t              offset() const { return m_offset - RelocationManager::RelocationManager::ApplicationBaseAddress; }
+		size_t              offset() const { return m_offset - xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress; }
 
 		value_type get()
 		{
@@ -272,7 +272,7 @@ namespace REL
 		{
 			const auto addr = address() + (sizeof(void*) * a_idx);
 			const auto result = *reinterpret_cast<uintptr_t*>(addr);
-			OrbisMemoryHandler::safe_write(addr, a_newFunc);
+			xUtilty::safe_write(addr, a_newFunc);
 			return result;
 		}
 

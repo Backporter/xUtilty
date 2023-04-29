@@ -3,7 +3,6 @@
 #include "../include/SystemWrapper.h"
 #include "../include/FileSystem.h"
 
-
 #if defined(__ORBIS__)
 #include <kernel.h>
 #elif defined(__OPENORBIS__)
@@ -35,7 +34,7 @@ namespace OrbisSFOHandler
 	bool sfo_parser::ParseSFO(bool FixJailedState, char* Path)
 	{
 		if (FixJailedState)
-			SystemWrapper::Jailbreak();
+			xUtilty::SystemWrapper::Jailbreak();
 
 		FILE* FD;
 		sfo::Header Header;
@@ -101,14 +100,14 @@ namespace OrbisSFOHandler
 		Entry.clear();
 		
 		if (FixJailedState)
-			SystemWrapper::Jail();
+			xUtilty::SystemWrapper::Jail();
 
 		return true;
 	}
 
 	void sfo_parser::ParseCurrentProcessSFO()
 	{
-		auto dirs = OrbisFileSystem::GetDirectoryEntries("/mnt/sandbox/pfsmnt/", NULL, false, 7, false);
+		auto dirs = xUtilty::FileSystem::GetDirectoryEntries("/mnt/sandbox/pfsmnt/", NULL, false, 7, false);
 		for (auto dir : dirs)
 		{
 			auto ID = dir.m_filename.substr(dir.m_filename.size() - 5, 5);
@@ -135,7 +134,7 @@ namespace OrbisSFOHandler
 			}
 			else
 			{
-				MessageHandler::KernelPrintOut("failed to parse sfo(%s)", path);
+				xUtilty::KernelPrintOut("failed to parse sfo(%s)", path);
 			}
 		}
 	}

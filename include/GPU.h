@@ -2,7 +2,10 @@
 
 #include <stdint.h>
 
-namespace GPU
+namespace xUtilty
 {
-	uint64_t GetFrequency();
+	namespace GPU
+	{
+		uint64_t GetFrequency();
+	}
 }

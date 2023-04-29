@@ -1,21 +1,22 @@
 #include "../include/Logger.h"
 
+//
 #include "../include/FileSystem.h"
-#include "../include/MessageHandler.h"
-#include "../include/INIHandler.h"
 #include "../include/SystemWrapper.h"
 
-namespace Log
+namespace xUtilty
 {
-	Log::Log() : m_fd(-1), m_path(nullptr), m_flags(0) {}
-
 	Log::~Log()
 	{
 		if (Vaild())
+		{
 			Close();
+		}
 
 		if ((m_flags & kFlags::kManagedPath) == 0)
+		{
 			free((void*)m_path);
+		}
 
 		m_fd = -1;
 		m_path = nullptr;
@@ -85,21 +86,21 @@ namespace Log
 	bool Log::OpenRelitive(int ID, char* path)
 	{
 		// prevent possable issues
-		assert(ID != OrbisFileSystem::System);
+		assert(ID != FileSystem::System);
 		
-		if (ID == OrbisFileSystem::Net)
+		if (ID == FileSystem::Net)
 			return Connect(path);
 
 		// buffer to store the created path
 		char buff[260];
-		if (!OrbisFileSystem::CreateFullPath(buff, ID, path))
+		if (!FileSystem::CreateFullPath(buff, ID, path))
 		{
 			// MessageHandler::KernelPrintOut("%s %s %d failed to create full path for log", __FILE__, __FUNCTION__, __LINE__);
 			return false;
 		}
 
 		// confirm the directory path exists and create it
-		OrbisFileSystem::CreateDirectoryPath(buff);
+		FileSystem::CreateDirectoryPath(buff);
 
 		// open said log path
 		if ((m_fd = open(buff, O_CREAT | O_RDWR | O_SYNC | O_TRUNC | O_NONBLOCK, 0666)) < 0)

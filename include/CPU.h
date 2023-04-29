@@ -1,9 +1,13 @@
 #pragma once
 
+// xxxxxxx_t
 #include <stdint.h>
 
-namespace CPU
+namespace xUtilty
 {
-	uint64_t GetFrequency();
-	uint64_t GetFrequency(int core);
+	namespace CPU
+	{
+		uint64_t GetFrequency();
+		uint64_t GetFrequency(int core);
+	}
 }
