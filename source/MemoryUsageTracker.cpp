@@ -33,6 +33,8 @@ namespace xUtilty
 		{
 #if __ORBIS__
 			return stats.maxSystemSize;
+#else
+			return 0;
 #endif
 		}
 
@@ -40,6 +42,8 @@ namespace xUtilty
 		{
 #if __ORBIS__
 			return stats.currentSystemSize;
+#else
+			return 0;
 #endif
 		}
 
@@ -47,6 +51,8 @@ namespace xUtilty
 		{
 #if __ORBIS__
 			return stats.maxInuseSize;
+#else
+			return 0;
 #endif
 		}
 
@@ -54,6 +60,8 @@ namespace xUtilty
 		{
 #if __ORBIS__
 			return stats.currentInuseSize;
+#else
+			return 0;
 #endif
 		}
 
@@ -61,6 +69,8 @@ namespace xUtilty
 		{
 #if __ORBIS__
 			return stats.currentSystemSize - stats.currentInuseSize;
+#else
+			return 0;
 #endif
 		}
 
@@ -68,6 +78,8 @@ namespace xUtilty
 		{
 #if __ORBIS__ 
 			return stats.currentSystemSize;
+#else
+			return 0;
 #endif
 		}
 	}

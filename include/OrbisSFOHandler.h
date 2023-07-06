@@ -85,5 +85,8 @@ namespace OrbisSFOHandler
 	private:
 		std::vector<KeyInfo> Data;
 	};
+
+	// sfo_parser needs to be Initializeed before execution so we need to mark it as a constructor.
+	__attribute__((constructor)) inline void INIT();
 }
 #endif

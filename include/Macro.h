@@ -108,6 +108,9 @@
 #define PRINT_OFFSETOF(A, B) char (*__daniel_kleinstein_is_cool)[sizeof(char[offsetof(A, B)])] = 1
 #endif 
 
+#ifndef PRINT_CPLUSPLUS
+#define PRINT_CPLUSPLUS char (*XD)[sizeof(char[__cplusplus])] = 1
+#endif 
 
 #ifndef STRINGIFY
 #define STRINGIFYEX(a) #a

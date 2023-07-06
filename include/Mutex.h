@@ -1,7 +1,12 @@
 #pragma once
 
+#if __clang__
 // pthread_mutex_t, pthread_mutexattr_t
 #include <pthread.h>
+#elif _WIN32 || _WIN64
+#include <Windows.h>
+#include <synchapi.h>
+#endif
 
 namespace xUtilty
 {
@@ -25,8 +30,12 @@ namespace xUtilty
 		bool Lock();
 		bool Unlock();
 	protected:
+#if __clang__
 		pthread_mutex_t	    m_mutex;
 		pthread_mutexattr_t m_mutexAttr;
+#elif _WIN32 || _WIN64
+		CRITICAL_SECTION	m_crit;
+#endif
 	};
 
 	template <typename T>

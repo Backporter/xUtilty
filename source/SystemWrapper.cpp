@@ -3,7 +3,7 @@
 //
 #include "../include/MessageHandler.h"
 #include "../include/FileSystem.h"
-#include "../include/SafeTypes.h"
+#include "../include/Types.h"
 
 
 #if defined(__ORBIS__)
@@ -27,11 +27,18 @@ typedef OrbisKernelEventFlagOptParam SceKernelEventFlagOptParam;
 #include <stdint.h>
 #include <string>
 #include <iostream>
+#include <fcntl.h>
+
+#if _WIN32 || _WIN64
+#include <io.h>
+#endif
 
 #ifndef USE_JBC
 #if __ORBIS__
 #define USE_JBC true
 #elif __OPENORBIS__
+#define USE_JBC false
+#else
 #define USE_JBC false
 #endif
 #endif
@@ -80,6 +87,10 @@ namespace xUtilty
 		int(*_sceKernelGetCpuUsage)(struct proc*, int*) { 0 };
 		int(*_sceKernelGetThreadName)(unsigned int, char*) { 0 };
 
+
+		int32_t(*_sceCoredumpRegisterCoredumpHandler)(int32_t(*func)(void*), size_t stackSize, void* pCommon);
+		void(*_sceCoredumpDebugTextOut)(const char*, int) { 0 };
+
 		int(*_jbc_get_cred)(jbc_cred *ans) { 0 };
 		int(*_jbc_jailbreak_cred)(jbc_cred *ans) { 0 };
 		int(*_jbc_set_cred)(const jbc_cred *ans) { 0 };
@@ -92,6 +103,87 @@ namespace xUtilty
 #pragma endregion
 
 #pragma region
+
+		int		open(const char* path, int flags, uint16_t mode)
+		{
+#if __clang__
+			return ::open(path, flags, mode);
+#elif _WIN32 || _WIN64
+			return ::_open(path, flags, mode);
+#endif
+		}
+
+		int		creat(const char* path, uint16_t mode)
+		{
+#if __clang__
+			return ::creat(path, mode);
+#elif _WIN32 || _WIN64
+			return ::_creat(path, mode);
+#endif
+		}
+
+		int		close(int fd)
+		{
+#if __clang__
+			return ::close(fd);
+#elif _WIN32 || _WIN64
+			return ::_close(fd);
+#endif
+		}
+
+		int64_t					write(int fd, const void* data, size_t size)
+		{
+#if __clang__
+			return ::write(fd, data, size);
+#elif _WIN32 || _WIN64
+			return ::_write(fd, data, size);
+#endif
+		}
+
+		int64_t					read(int fd, void* data, size_t size)
+		{
+#if __clang__
+			return ::read(fd, data, size);
+#elif _WIN32 || _WIN64
+			return ::_read(fd, data, size);
+#endif
+		}
+
+		off_t	 lseek(int fd, off_t pos, int mode)
+		{
+#if __clang__
+			return ::lseek(fd, pos, mode);
+#elif _WIN32 || _WIN64
+			return ::_lseek(fd, pos, mode);
+#endif
+		}
+
+		int						fstat(int fd, struct stat* stat)
+		{
+#if __clang__
+			return ::fstat(fd, stat);
+#elif _WIN32 || _WIN64
+			return ::fstat(fd, stat);
+#endif
+		}
+
+		int						fsync(int fd)
+		{
+#if __clang__
+			return ::fsync(fd);
+#elif _WIN32 || _WIN64
+			return ::_commit(fd);
+#endif
+		}
+
+		int						ftruncate(int fd, off_t pos)
+		{
+#if __clang__
+			return ::ftruncate(fd, pos);
+#elif _WIN32 || _WIN64
+			return ::_chsize_s(fd, pos);
+#endif
+		}
 
 		// https://opensource.apple.com/source/xnu/xnu-4903.221.2/libsyscall/wrappers/ioctl.c.auto.html
 		int		ioctl(int fd, unsigned long request, ...)
@@ -160,7 +252,6 @@ namespace xUtilty
 			}
 			else
 			{
-				Notify(":( M");
 				return ::malloc(len);
 			}
 		}
@@ -173,7 +264,6 @@ namespace xUtilty
 			}
 			else
 			{
-				Notify(":( F");
 				::free(ptr);
 			}
 		}
@@ -310,6 +400,24 @@ namespace xUtilty
 			}
 		}
 
+		int32_t	sceCoredumpRegisterCoredumpHandler(int32_t(*func)(void*), size_t stackSize, void* pCommon)
+		{
+			if (_sceCoredumpRegisterCoredumpHandler)
+			{
+				return _sceCoredumpRegisterCoredumpHandler(func, stackSize, pCommon);
+			}
+
+			return -1;
+		}
+
+		void	sceCoredumpDebugTextOut(const char* str, int len)
+		{
+			if (_sceCoredumpDebugTextOut)
+			{
+				return _sceCoredumpDebugTextOut(str, len);
+			}
+		}
+
 		int		jbc_get_cred(jbc_cred *ans)
 		{
 			if (_jbc_get_cred)
@@ -410,7 +518,6 @@ namespace xUtilty
 #pragma endregion
 
 		bool initialized() { return s_initialized; }
-		std::map<int32_t, OrbisKernelModuleInfo>& GetModuleList() { return g_moduleList; }
 
 		int32_t GetlibjbcHandle(int32_t* a_newhandle) { if (a_newhandle) { libjbchandle = *a_newhandle; } return libjbchandle; }
 		int32_t GetLibcHandle(int32_t* a_newhandle) { if (a_newhandle) { libchandle = *a_newhandle; } return libchandle; }
@@ -419,10 +526,11 @@ namespace xUtilty
 		int32_t GetSceNpTrophyHandle(int32_t* a_newhandle) { if (a_newhandle) { libSceNpTrophyhandle = *a_newhandle; } return libSceNpTrophyhandle; }
 		int		GetFirmwareVersion(int32_t* a_newfw) { if (a_newfw) { sysKernelGetLowerLimitUpdVersionarg = *a_newfw; } return sysKernelGetLowerLimitUpdVersionarg; }
 
-		OrbisKernelFirmwareInfo* GetFirmware() { return &Firmware; }
-		jbc_cred*				 GetBackupOrginalCred() { return &BackupOrginalcred; }
-		jbc_cred*				 GetOrginalcred() { return &Orginalcred; }
-		jbc_cred*				 GetRootCred() { return &RootCred; }
+		std::map<int32_t, OrbisKernelModuleInfo>&	GetModuleList() { return g_moduleList; }
+		OrbisKernelFirmwareInfo*					GetFirmware() { return &Firmware; }
+		jbc_cred*									GetBackupOrginalCred() { return &BackupOrginalcred; }
+		jbc_cred*									GetOrginalcred() { return &Orginalcred; }
+		jbc_cred*									GetRootCred() { return &RootCred; }
 
 		int32_t	QueryMemoryProtection(void* addr, void** start, void** end, int* prot)
 		{
@@ -492,10 +600,9 @@ namespace xUtilty
 #if __ORBIS__ || __OPENORBIS__
 			return sceKernelMapDirectMemory(a_address, a_size, a_prot, a_flags, a_directMemoryStart, a_maxPageSize);
 #else
-			return 0
+			return 0;
 #endif
 		}
-
 
 		int32_t ReleaseDirectMemory(off_t a_physicalAddress, size_t a_size)
 		{
@@ -526,6 +633,15 @@ namespace xUtilty
 #endif
 		}
 
+		int			strcasecmp(const char* a_lhs, const char* a_rhs)
+		{
+#if __clang__
+			return ::strcasecmp(a_lhs, a_rhs);
+#else
+			return ::_stricmp(a_lhs, a_rhs);
+#endif
+		}
+
 		const char*	strchr_s(const char* _Str, char _Ch)
 		{
 			const char* ret = strchr(_Str, _Ch);
@@ -546,6 +662,26 @@ namespace xUtilty
 			}
 
 			return _Str;
+		}
+
+		uintptr_t LoadModule(const char* a_path, size_t a_argc, const void* a_argv, uint32_t a_flags, const void* a_opt, int* a_res)
+		{
+#if __ORBIS__
+			return sceKernelLoadStartModule(a_path, a_argc, a_argv, a_flags, (const SceKernelLoadModuleOpt*)a_opt, a_res);
+#elif __OPENORBIS__
+			return sceKernelLoadStartModule(a_path, a_argc, a_argv, a_flags, (void*)a_opt, (void*)a_res);
+#else
+			return -1;
+#endif
+		}
+
+		int32_t ModuleDlsym(uintptr_t a_handle, const char* a_symbol, void** a_funcptr)
+		{
+#if __ORBIS__ || __OPENORBIS__
+			return sceKernelDlsym(a_handle, a_symbol, a_funcptr);
+#else
+			return -1;
+#endif
 		}
 
 		void	ImportSymbols()
@@ -578,72 +714,83 @@ namespace xUtilty
 			{
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelSendNotificationRequest", (void**)&_sceKernelSendNotificationRequest)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelSendNotificationRequest");
+					LocalPrint("Failed to get function address for sceKernelSendNotificationRequest");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelDebugOutText", (void**)&_sceKernelDebugOutText)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelDebugOutText");
+					LocalPrint("Failed to get function address for sceKernelDebugOutText");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetSystemSwVersion", (void**)&_sceKernelGetSystemSwVersion)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetSystemSwVersion");
+					KernelPrintOut("Failed to get function address for sceKernelGetSystemSwVersion");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sysKernelGetUpdVersion", (void**)&_sysKernelGetUpdVersion)) != 0)
 				{
-					Notify("Failed to get function address for sysKernelGetUpdVersion");
+					KernelPrintOut("Failed to get function address for sysKernelGetUpdVersion");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sysKernelGetLowerLimitUpdVersion", (void**)&_sysKernelGetLowerLimitUpdVersion)) != 0)
 				{
-					Notify("Failed to get function address for sysKernelGetLowerLimitUpdVersion");
+					KernelPrintOut("Failed to get function address for sysKernelGetLowerLimitUpdVersion");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sysconf", (void**)&_sysconf)) != 0)
 				{
-					Notify("Failed to get function address for sysconf");
+					KernelPrintOut("Failed to get function address for sysconf");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "ioctl", (void**)&_ioctl)) != 0)
 				{
-					Notify("Failed to get function address for ioctl");
+					KernelPrintOut("Failed to get function address for ioctl");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetFsSandboxRandomWord", (void**)&_sceKernelGetFsSandboxRandomWord)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetFsSandboxRandomWord");
+					KernelPrintOut("Failed to get function address for sceKernelGetFsSandboxRandomWord");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelInternalMemoryGetAvailableSize", (void**)&_sceKernelInternalMemoryGetAvailableSize)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelInternalMemoryGetAvailableSize");
+					KernelPrintOut("Failed to get function address for sceKernelInternalMemoryGetAvailableSize");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetCpuFrequency", (void**)&_sceKernelGetCpuFrequency)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetCpuFrequency");
+					KernelPrintOut("Failed to get function address for sceKernelGetCpuFrequency");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetCpuUsage", (void**)&_sceKernelGetCpuUsage)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetCpuUsage");
+					KernelPrintOut("Failed to get function address for sceKernelGetCpuUsage");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetThreadName", (void**)&_sceKernelGetThreadName)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetCpuUsage");
+					KernelPrintOut("Failed to get function address for sceKernelGetCpuUsage");
 				}
 
 				if ((ret = sceKernelDlsym(libkernelhandle, "sceKernelGetModuleInfo", (void**)&_sceKernelGetModuleInfo)) != 0)
 				{
-					Notify("Failed to get function address for sceKernelGetModuleInfo");
+					KernelPrintOut("Failed to get function address for sceKernelGetModuleInfo");
+				}
+
+				//
+				if ((ret = sceKernelDlsym(libkernelhandle, "sceCoredumpRegisterCoredumpHandler", (void**)&_sceCoredumpRegisterCoredumpHandler)) != 0)
+				{
+					KernelPrintOut("Failed to get function address for sceCoredumpRegisterCoredumpHandler");
+				}
+
+				if ((ret = sceKernelDlsym(libkernelhandle, "sceCoredumpDebugTextOut", (void**)&_sceCoredumpDebugTextOut)) != 0)
+				{
+					KernelPrintOut("Failed to get function address for sceCoredumpDebugTextOut");
 				}
 			}
 			else
 			{
-				Notify("Failed To Load libkernel (libkernel.sprx %d", libkernelhandle);
+				KernelPrintOut("Failed To Load libkernel (libkernel.sprx %d", libkernelhandle);
 			}
 
 			libchandle = sceKernelLoadStartModule(libcpath, 0, 0, 0, 0, 0);
@@ -651,33 +798,33 @@ namespace xUtilty
 			{
 				if ((ret = sceKernelDlsym(libchandle, "wcstombs", (void**)&_wcstombs)) != 0)
 				{
-					Notify("Failed to get function address for wcstombs");
+					KernelPrintOut("Failed to get function address for wcstombs");
 				}
 
 				if ((ret = sceKernelDlsym(libchandle, "mbstowcs", (void**)&_mbstowcs)) != 0)
 				{
-					Notify("Failed to get function address for mbstowcs");
+					KernelPrintOut("Failed to get function address for mbstowcs");
 				}
 
 				if ((ret = sceKernelDlsym(libchandle, "vsprintf", (void**)&_vsprintf)) != 0)
 				{
-					Notify("Failed to get function address for vsprintf");
+					KernelPrintOut("Failed to get function address for vsprintf");
 				}
 
 				if ((ret = sceKernelDlsym(libchandle, "malloc", (void**)&_malloc)) != 0)
 				{
-					Notify("Failed to get function address for malloc");
+					KernelPrintOut("Failed to get function address for malloc");
 				}
 
 				if ((ret = sceKernelDlsym(libchandle, "free", (void**)&_free)) != 0)
 				{
-					Notify("Failed to get function address for free");
+					KernelPrintOut("Failed to get function address for free");
 				}
 
 			}
 			else
 			{
-				Notify("Failed To Load libc (libc.sprx / %d)", libchandle);
+				KernelPrintOut("Failed To Load libc (libc.sprx / %d)", libchandle);
 			}
 
 			libjbchandle = sceKernelLoadStartModule(libjbcpath, 0, 0, 0, 0, 0);
@@ -685,38 +832,38 @@ namespace xUtilty
 			{
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_get_cred", (void**)&_jbc_get_cred)) != 0)
 				{
-					Notify("Failed to get function address for jbc_get_cred");
+					KernelPrintOut("Failed to get function address for jbc_get_cred");
 				}
 
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_jailbreak_cred", (void**)&_jbc_jailbreak_cred)) != 0)
 				{
-					Notify("Failed to get function address for jbc_jailbreak_cred");
+					KernelPrintOut("Failed to get function address for jbc_jailbreak_cred");
 				}
 
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_set_cred", (void**)&_jbc_set_cred)) != 0)
 				{
-					Notify("Failed to get function address for jbc_set_cred");
+					KernelPrintOut("Failed to get function address for jbc_set_cred");
 				}
 
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_run_as_root", (void**)&_jbc_run_as_root)) != 0)
 				{
-					Notify("Failed to get function address for jbc_run_as_root");
+					KernelPrintOut("Failed to get function address for jbc_run_as_root");
 				}
 
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_mount_in_sandbox", (void**)&_jbc_mount_in_sandbox)) != 0)
 				{
-					Notify("Failed to get function address for jbc_mount_in_sandbox");
+					KernelPrintOut("Failed to get function address for jbc_mount_in_sandbox");
 				}
 
 				if ((ret = sceKernelDlsym(libjbchandle, "jbc_unmount_in_sandbox", (void**)&_jbc_unmount_in_sandbox)) != 0)
 				{
-					Notify("Failed to get function address for jbc_unmount_in_sandbox");
+					KernelPrintOut("Failed to get function address for jbc_unmount_in_sandbox");
 				}
 
 			}
 			else
 			{
-				Notify("Failed To Load libjbc(%s / %d)", zlibpath, zlibhandle);
+				KernelPrintOut("Failed To Load libjbc(%s / %d)", zlibpath, zlibhandle);
 			}
 
 			zlibhandle = sceKernelLoadStartModule(zlibpath, 0, 0, 0, 0, 0);
@@ -724,17 +871,17 @@ namespace xUtilty
 			{
 				if ((ret = sceKernelDlsym(zlibhandle, "compress", (void**)&_compress)) != 0)
 				{
-					Notify("Failed to get function address for compress");
+					KernelPrintOut("Failed to get function address for compress");
 				}
 
 				if ((ret = sceKernelDlsym(zlibhandle, "uncompress", (void**)&_uncompress)) != 0)
 				{
-					Notify("Failed to get function address for uncompress");
+					KernelPrintOut("Failed to get function address for uncompress");
 				}
 			}
 			else
 			{
-				Notify("Failed To Load zlib(%s / %d)", zlibpath, zlibhandle);
+				KernelPrintOut("[Info] Failed To Load zlib(%s / %d)", zlibpath, zlibhandle);
 			}
 #endif
 		}
@@ -746,16 +893,16 @@ namespace xUtilty
 
 #if __ORBIS__ || __OPENORBIS__
 
-			if (USE_JBC)
-			{
-				// backup, nonvolatile.
-				jbc_get_cred(&BackupOrginalcred);
-			}
+#if USE_JBC
+			// backup, nonvolatile.
+			jbc_get_cred(&BackupOrginalcred);
+#endif
 
 			ImportSymbols();
 			sceKernelGetSystemSwVersion(&Firmware);
 
-			if (USE_JBC && libjbchandle > 0)
+#if USE_JBC
+			if (libjbchandle > 0)
 			{
 				Jailbreak();
 				sysKernelGetLowerLimitUpdVersion(&sysKernelGetLowerLimitUpdVersionarg);
@@ -765,6 +912,9 @@ namespace xUtilty
 			{
 				sysKernelGetLowerLimitUpdVersionarg = Firmware.Version;
 			}
+#else
+			sysKernelGetLowerLimitUpdVersionarg = Firmware.Version;
+#endif
 
 #elif __SWITCH__
 #endif
@@ -805,10 +955,18 @@ namespace xUtilty
 			return 0;
 		}
 
-		void	UpdateRTC(SceRtcDateTime* now)
+		void	UpdateRTC(RtcDateTime* now)
 		{
-			if (sceRtcGetCurrentClockLocalTime(now) != 0)
-				memset(now, 0, sizeof(SceRtcDateTime));
+#if __ORBIS__ || __OPENORBIS__
+			auto ret = sceRtcGetCurrentClockLocalTime(now);
+#elif _WIN32 || _WIN64
+			auto ret = 0;
+			GetSystemTime(now);
+#endif
+			if (ret != 0)
+			{
+				memset(now, 0, sizeof(RtcDateTime));
+			}
 		}
 
 		void	Jailbreak()
@@ -852,7 +1010,7 @@ namespace xUtilty
 
 			// confirm it mounted
 			return FileSystem::PathExists(FileSystem::Full, sandbox, true);
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+#else
 			return true;
 #endif
 		}
@@ -878,7 +1036,7 @@ namespace xUtilty
 			jbc_unmount_in_sandbox(sandboxname);
 
 			return FileSystem::PathExists(FileSystem::Full, sandbox, true);
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+#else
 			return true;
 #endif
 		}
@@ -893,7 +1051,7 @@ namespace xUtilty
 
 			size_t s_moduleCount = 0;
 			int ret = 0;
-			int32_t handles[SCE_KERNEL_MAX_MODULES]{ 0 };
+			int32_t handles[SCE_KERNEL_MAX_MODULES] { 0 };
 
 			if ((ret = sceKernelGetModuleList((SceKernelModule*)handles, SCE_KERNEL_MAX_MODULES, &s_moduleCount)))
 			{
@@ -1004,13 +1162,45 @@ namespace xUtilty
 				{
 #if __ORBIS__
 					return (uintptr_t)pair.second.segmentInfo[0].baseAddr;
-#else
+#elif __OPENORBIS__
 					return (uintptr_t)pair.second.segmentInfo[0].address;
 #endif
 				}
 			}
 
 			return 0;
+		}
+
+		void SetModuleArray(uintptr_t* a_pModuleBaseAddressArray, size_t a_arraySize)
+		{
+			if (!a_pModuleBaseAddressArray)
+				return;
+
+			// no modules in the list?
+			if (!g_moduleList.size())
+			{
+				// init list.
+				if (!initializeModuleList())
+				{
+					// failed?, force close the game.
+					assert(false);
+				}
+			}
+
+			size_t i = 0;
+			for (auto& pair : g_moduleList)
+			{
+				if (i > a_arraySize)
+					break;
+
+#if __ORBIS__
+				a_pModuleBaseAddressArray[i] = (uintptr_t)pair.second.segmentInfo[0].baseAddr;
+#elif __OPENORBIS__
+				a_pModuleBaseAddressArray[i] = (uintptr_t)pair.second.segmentInfo[0].address;
+#else
+#endif
+				i++;
+			}
 		}
 	}
 }

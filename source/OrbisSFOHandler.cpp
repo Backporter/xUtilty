@@ -164,5 +164,10 @@ namespace OrbisSFOHandler
 
 		return -1;
 	}
+
+	__attribute__((constructor)) inline void INIT()
+	{
+		sfo_parser::GetSingleton()->ParseCurrentProcessSFO();
+	}
 }
 #endif

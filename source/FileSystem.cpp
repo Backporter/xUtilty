@@ -13,6 +13,8 @@
 #include <orbis/libkernel.h>
 #include <orbis/Rtc.h>
 #include <dirent.h>
+#elif _WIN32 || _WIN64
+#include <direct.h>
 #endif
 
 #include <stdint.h>
@@ -24,7 +26,10 @@
 #include <string>
 #include <wchar.h>
 #include <fcntl.h>
+
+#if __clang__
 #include <unistd.h>
+#endif
 
 namespace xUtilty
 {
@@ -34,13 +39,10 @@ namespace xUtilty
 		{
 			std::vector<DirectoryEntry> DirectoryEntries;
 
+#if __clang__
 			size_t stringlen = strlen(path) - 1;
 
-#if _DEBUG
-			KernelPrintOut("%s %d %d", path, stringlen, path[stringlen]);
-#endif
-
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
+#if __ORBIS__ || __OPENORBIS__
 			bool SwapCreed = (PathType == Data || PathType == USB0 || PathType == USB1 || PathType == USB2 || PathType == USB3 || PathType == USB4 || PathType == USB5 || PathType == USB6 || PathType == USB7 || PathType == System);
 
 			if (SwapCreed)
@@ -50,11 +52,15 @@ namespace xUtilty
 			int fd = open(path, O_RDONLY | O_DIRECTORY, 0000555);
 			if (fd < 0)
 			{
-				Notify("open(%s) failed with 0x%lx", path, fd);
+#if _DEBUG
+				PRINT_FMT("open(%s) failed with 0x%lx", path, fd);
+#endif
 
-#if defined (__ORBIS__) || defined(__OPENORBIS__)
+#if __ORBIS__ || __OPENORBIS__
 				if (SwapCreed)
+				{
 					SystemWrapper::Jail();
+				}
 #endif
 				return DirectoryEntries;
 			}
@@ -89,7 +95,7 @@ namespace xUtilty
 				dirent *entry = (dirent*)(buffer + curpos);
 				curpos += entry->d_reclen;
 
-				if (strcasecmp(entry->d_name, ".") == 0 || strcasecmp(entry->d_name, "..") == 0)
+				if (SystemWrapper::strcasecmp(entry->d_name, ".") == 0 || SystemWrapper::strcasecmp(entry->d_name, "..") == 0)
 					continue;
 
 				if (UseFilter)
@@ -150,11 +156,14 @@ namespace xUtilty
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 			if (SwapCreed)
+			{
 				SystemWrapper::Jail();
+			}
 #endif
 			close(fd);
 			free(buffer);
-
+#else
+#endif
 			return DirectoryEntries;
 		}
 
@@ -163,13 +172,17 @@ namespace xUtilty
 			int fd = 0;
 
 			if (isDIR)
-				fd = open(path, O_RDONLY | O_DIRECTORY, 0);
+				fd = SystemWrapper::open(path, O_RDONLY 
+#if __clang__
+					| O_DIRECTORY
+#endif
+					, 0);
 			else
-				fd = open(path, O_RDONLY, 0);
+				fd = SystemWrapper::open(path, O_RDONLY, 0);
 
 			if (fd >= 0)
 			{
-				close(fd);
+				SystemWrapper::close(fd);
 				return true;
 			}
 			else
@@ -544,7 +557,11 @@ namespace xUtilty
 				if (path[i] == '/' || path[i] == '\\')
 				{
 					unlink(buf);
+#if __clang__
 					mkdir(buf, 0000777);
+#elif _WIN32 || _WIN64
+					_mkdir(buf);
+#endif
 				}
 
 				buf[i] = path[i];
@@ -577,19 +594,26 @@ namespace xUtilty
 
 			char buffer[260]{ 0 };
 
-
 			Mount(reltype);
 
 			if (reltype == Full)
 			{
 				FileSystem::CreateDirectoryPath((char*)path);
-				fd = open(path, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+				fd = SystemWrapper::open(path, O_WRONLY | O_CREAT 
+#if __clang__
+					| O_DIRECT
+#endif		
+					, 0000777);
 			}
 			else
 			{
 				CreateFullPath(buffer, reltype, path);
 				FileSystem::CreateDirectoryPath(buffer);
-				fd = open(buffer, O_WRONLY | O_CREAT | O_DIRECT, 0000777);
+				fd = SystemWrapper::open(buffer, O_WRONLY | O_CREAT 
+#if __clang__
+					| O_DIRECT
+#endif
+					, 0000777);
 			}
 
 			if (fd <= 0)
@@ -598,10 +622,10 @@ namespace xUtilty
 				return;
 			}
 
-			if ((ret = write(fd, data, length)) != length)
+			if ((ret = SystemWrapper::write(fd, data, length)) != length)
 				KernelPrintOut("Failed to write to [%fd[0x%lx] ret [0x%lx] length [0x%lx]", (reltype == Full ? path : buffer), fd, ret, length);
 
-			close(fd);
+			SystemWrapper::close(fd);
 			Unmount(reltype);
 		}
 
@@ -621,7 +645,7 @@ namespace xUtilty
 				FileSystem::WriteFileToDisk(FileSystem::USB1, path, base, size);
 
 			return true;
-#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+#else
 			return true;
 #endif
 		}

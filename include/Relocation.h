@@ -138,6 +138,30 @@ namespace REL
 		}
 	}
 
+	template <size_t N>
+	class Name
+	{
+	public:
+		constexpr Name() noexcept = default;
+
+		explicit constexpr Name(const char* a_name) noexcept :
+			m_name(a_name)
+		{}
+
+		constexpr Name& operator=(const char* a_name) noexcept
+		{
+			m_name = a_name;
+			return *this;
+		}
+
+		uintptr_t				address() const { return xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N] + offset(); }
+		constexpr const char*	name() const noexcept { return m_name; }
+		uintptr_t				offset() const { return xUtilty::OffsetManger::GetSingleton().GetOffsetFromName(m_name); }
+	public:
+		const char* m_name { 0 };
+	};
+
+	template <size_t N>
 	class Offset
 	{
 	public:
@@ -160,12 +184,13 @@ namespace REL
 
 		uintptr_t address() const 
 		{ 
-			return offset() + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress;
+			return offset() + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N];
 		}
 	public:
 		size_t m_offset{ 0 };
 	};
 
+	template <size_t N>
 	class ID
 	{
 	public:
@@ -181,12 +206,14 @@ namespace REL
 			return *this;
 		}
 
+		uintptr_t          address() const { return xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N] + offset(); }
 		constexpr uint64_t id() const noexcept { return m_id; }
+		size_t             offset() const { return xUtilty::OffsetManger::GetSingleton().GetOffsetFromID(m_id); }
 	public:
 		uint64_t m_id{ 0 };
 	};
 
-	template <typename T>
+	template <typename T, size_t N = 0>
 	class Relocation
 	{
 	public:
@@ -195,50 +222,27 @@ namespace REL
 		constexpr Relocation() noexcept = default;
 
 		constexpr Relocation(uintptr_t a_offset) noexcept :
-			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N] }
 		{}
-
-		// constexpr Relocation(Offset a_offset) noexcept :
-		// 	m_offset{ a_offset.address() }
-		// {}
 
 		constexpr Relocation(uint32_t a_id, uintptr_t a_offset) :
-			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N] }
 		{}
-
-		// constexpr Relocation(ID a_id, Offset a_offset) :
-		// 	m_offset{ a_offset.address() }
-		// {}
 
 		constexpr Relocation(uint32_t a_id, uint32_t a_id2, uintptr_t a_offset) :
-			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress }
+			m_offset{ a_offset + xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N] }
 		{}
-
-		//constexpr Relocation(ID a_id, ID a_id2, Offset a_offset) :
-		//	m_offset{ a_offset.address() }
-		//{}
 
 		constexpr Relocation(const char* a_id, uintptr_t a_offset) : Relocation(static_cast<uint32_t>(0), a_offset)
 		{}
 
-		// constexpr Relocation(const char* a_id, Offset a_offset) : Relocation(0, a_offset)
-		// {}
 
 		constexpr Relocation(const char* a_id, const char* a_id2, uintptr_t a_offset) : Relocation(static_cast<uint32_t>(0), static_cast<uint32_t>(0), a_offset)
 		{}
 
-		// constexpr Relocation(const char* a_id, const char* a_id2, Offset a_offset) : Relocation(static_cast<uint32_t>(0), static_cast<uint32_t>(0), a_offset)
-		// {}
-
 		constexpr Relocation& operator=(uintptr_t a_address) noexcept
 		{
 			m_offset = a_address;
-			return *this;
-		}
-
-		Relocation& operator=(Offset a_offset)
-		{
-			m_offset = a_offset.address();
 			return *this;
 		}
 
@@ -259,7 +263,7 @@ namespace REL
 		}
 
 		constexpr uintptr_t address() const noexcept { return m_offset; }
-		size_t              offset() const { return m_offset - xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress; }
+		size_t              offset() const { return m_offset - xUtilty::RelocationManager::RelocationManager::ApplicationBaseAddress[N]; }
 
 		value_type get()
 		{
@@ -286,5 +290,5 @@ namespace REL
 	};
 }
 
-template <typename T>
-using Relocation = REL::Relocation<T>;
+template <typename T, size_t N = 0>
+using Relocation = REL::Relocation<T, N>;

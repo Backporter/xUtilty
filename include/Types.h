@@ -4,18 +4,42 @@
 #include <orbis/libkernel.h>
 #include <orbis/Rtc.h>
 #include <sys/types.h>
-#include "SafeTypes.h"
+#include <orbis/_types/Np.h>
 #elif __ORBIS__
+#include <np.h>
 #include <kernel.h>
 #include <rtc.h>
 #include <sys/types.h>
-#include "SafeTypes.h"
 #endif
+
+#include <stdint.h>
+#include <time.h>
 
 #ifndef SCE_KERNEL_MAX_MODULES
 #define SCE_KERNEL_MAX_MODULES 256
 #endif
 
+#if __ORBIS__
+using NpParentalControlInfo = SceNpParentalControlInfo;
+using NpAuthorizationCode = SceNpAuthorizationCode;
+using NpCountryCode = SceNpCountryCode;
+using NpOnlineId = SceNpOnlineId;
+using wchar_t_t = wchar_t;
+using RtcDateTime = SceRtcDateTime;
+#elif __OPENORBIS__
+using NpParentalControlInfo = OrbisNpParentalControlInfo;
+using NpAuthorizationCode = OrbisNpAuthorizationCode;
+using NpCountryCode = OrbisNpCountryCode;
+using NpOnlineId = OrbisNpOnlineId;
+using wchar_t_t = uint16_t;
+using RtcDateTime = TimeTable;
+#else
+typedef wchar_t wchar_t_t;
+typedef struct _SYSTEMTIME RtcDateTime;
+#endif
+
+
+#if __clang__
 typedef struct _FILETIME
 {
 public:
@@ -37,6 +61,7 @@ public:
 	char          cFileName[260];
 	char          cAlternateFileName[14];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
+#endif
 
 typedef struct OrbisRtcDateTime
 {
@@ -66,11 +91,11 @@ typedef struct proc
 
 typedef struct jbc_cred
 {
-	uid_t uid;
-	uid_t ruid;
-	uid_t svuid;
-	gid_t rgid;
-	gid_t svgid;
+	uint32_t uid;
+	uint32_t ruid;
+	uint32_t svuid;
+	uint32_t rgid;
+	uint32_t svgid;
 	uintptr_t prison;
 	uintptr_t cdir;
 	uintptr_t rdir;
@@ -80,7 +105,7 @@ typedef struct jbc_cred
 	uint64_t sceProcCap;
 } jbc_cred;
 
-#if __ORBIS__
+#if __ORBIS__ || _WIN32 || _WIN64
 typedef struct OrbisLibcMallocManagedSize
 {
 	unsigned short	size;

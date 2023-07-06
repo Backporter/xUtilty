@@ -108,11 +108,14 @@ namespace xUtilty
 	};
 
 	// self contained vsprinf, if patches are applied this will do the same thing KernelPrintOut does.
-	void LocalPrint(const char * FMT, ...);
+	void LocalPrint(const char* a_fmt, ...);
 
 	// Pushes a Notifcation and writes to the kernel log
-	void Notify(const char* MessageFMT, ...);
+	void Notify(const char* a_fmt, ...);
 
 	// writes to the kernel log
-	void KernelPrintOut(const char* MessageFMT, ...);
+	void KernelPrintOut(const char* a_fmt, ...);
+
+	// Writes to the log using sceCoredumpDebugTextOut(), this has to be used instead of the others when in the coredump context otherwise you'll get a invaild syscall error.
+	void CoredumpPrintOut(const char* a_fmt, ...);
 }

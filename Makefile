@@ -1,5 +1,5 @@
 # Library metadata.
-PROJECTNAME := OrbisUtil
+PROJECTNAME := xUtilty
 
 # relistic it'd be better to just move INTDIR up before this, but nah...
 TARGETSTATIC  = ORBIS_Debug/lib$(PROJECTNAME).a

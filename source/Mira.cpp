@@ -181,6 +181,36 @@ namespace OrbisMiraHandler
 
 	}
 
+	void SetModuleArray(uintptr_t* a_pModuleBaseAddressArray, size_t a_arraySize)
+	{
+		if (!a_pModuleBaseAddressArray)
+			return;
+
+		if (g_processmodulelist.size() <= 0)
+		{
+			int fd = open("/dev/mira", 0, 0);
+			if (fd < 0)
+			{
+				return;
+			}
+
+			g_processmodulelist = ProcessModules(fd);
+			close(fd);
+		}
+
+		size_t i = 0;
+		for (auto l_Module : g_processmodulelist)
+		{
+			if (i > a_arraySize)
+				break;
+#if _DEBUG
+			xUtilty::KernelPrintOut("[DEBUG]: va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
+#endif
+			a_pModuleBaseAddressArray[i] = (uintptr_t)l_Module.ReallocBase;
+			i++;
+		}
+	}
+
 	uintptr_t GetBaseAddress(const char* path)
 	{
 		uintptr_t addr = 0x400000;
@@ -199,9 +229,11 @@ namespace OrbisMiraHandler
 
 		for (auto l_Module : g_processmodulelist)
 		{
+#if _DEBUG
+			xUtilty::KernelPrintOut("[DEBUG]: va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
+#endif
 			if (strcasecmp(l_Module.Path, path) == 0)
 			{
-				xUtilty::KernelPrintOut("va: (%p) textsz: (%p) data: (%p), datasz: (%p), path: (%s), pltgot: (%p), entry: (%p) realloc: (%p)", l_Module.VirtualAddressBase, l_Module.TextSize, l_Module.DataBase, l_Module.DataSize, l_Module.Path, l_Module.PltGot, l_Module.Entry, l_Module.ReallocBase);
 				addr = (uintptr_t)l_Module.ReallocBase;
 				break;
 			}

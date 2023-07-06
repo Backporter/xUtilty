@@ -164,6 +164,9 @@ namespace OrbisMiraHandler
 	// atempts to open the mira device and returns if its dectected or not
 	bool IsMira();
 
+	// illiterate through the internal list and set set each address in the array within the limits of Size
+	void SetModuleArray(uintptr_t* a_pModuleBaseAddressArray, size_t a_arraySize = 256);
+
 	// calls ProcessModules and iltterates through its list to get the speciifc module, this should *only* be called once
 	uintptr_t GetBaseAddress(const char* path = "/app0/eboot.bin");
 

@@ -1,13 +1,12 @@
 #pragma once
 
 #include "../include/SystemWrapper.h"
-#include "../include/SafeTypes.h"
+#include "../include/Types.h"
 
 #include <stdint.h>
 
 // Confirm platform via build-platform
 #if __ORBIS__ || __OPENORBIS__
-
 // OpenOrbis SDK?, include headers and typedef types to add to build platform cross-compatibility
 #if __OPENORBIS__
 #include <orbis/UserService.h>

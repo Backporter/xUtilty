@@ -9,6 +9,7 @@ namespace xUtilty
 {
 	void DumpRegisters()
 	{
+#if __clang__
 		// float  ymm0 = 0, ymm1 = 0, ymm2 = 0, ymm3 = 0, ymm4 = 0, ymm5 = 0, ymm6 = 0, ymm7 = 0, ymm8 = 0, ymm9 = 0, ymm10 = 0, ymm11 = 0, ymm12 = 0, ymm13 = 0, ymm14 = 0, ymm15 = 0;
 		double xmm0 = 0, xmm1 = 0, xmm2 = 0, xmm3 = 0, xmm4 = 0, xmm5 = 0, xmm6 = 0, xmm7 = 0, xmm8 = 0, xmm9 = 0, xmm10 = 0, xmm11 = 0, xmm12 = 0, xmm13 = 0, xmm14 = 0, xmm15 = 0;
 		int64_t rax = 0, rcx = 0, rdx = 0, rbx = 0, rsi = 0, rdi = 0, rsp = 0, rbp = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, rip = 0, BrF = 0, BrT = 0;
@@ -111,6 +112,7 @@ namespace xUtilty
 			eax, ebx, ecx, edx, esi, edi, ebp, esp, r8d, r9d, r10d, r11d, r12d, r13d, r14d, r15d,				 // 32-bit
 			xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15 // xmmX
 		);
+#endif
 	}
 
 	void safe_write(uint64_t dst, const void* src, size_t len)
@@ -131,7 +133,7 @@ namespace xUtilty
 		}
 		else
 		{
-			PRINT_RETURN_N("Failed to write memory, destination address is invalid (0x%lx, %p, 0x%lx", dst, src, len);
+			PRINT_RETURN_N("Failed to write memory, destination address is invalid (0x%lx, %p, 0x%lx)", dst, src, len);
 		}
 	}
 

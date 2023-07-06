@@ -32,6 +32,7 @@ namespace xUtilty
 			bool		SpawnCCE{ false };																											// bSpawnCCE
 
 			// [CSEL]
+			bool		UseExperimentalLogic{ false };
 			bool		UseCustomIconURL{ false };																									// bUseCustomIcon
 			const char* Icon{ "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png" }; 											// sIcon
 
@@ -64,10 +65,18 @@ namespace xUtilty
 
 			// [Executable]
 			bool		UseModuleStartAsEntryPoint{ false };																						// bUseModuleStartAsEntryPoint
+
+			// [AFR]
+			bool		UseAFR;																														// bUseAFR
+			char		FileSeperator;																												// iFileSeperator
+			char*		FilesToRedirect;																											// sFilesToRedirect
 		};
 
 		class INIHandler
 		{
+		public:
+			static bool& g_UseExperimentalLogic;
+			static bool& g_UseAFR;
 		public:
 			INIHandler() = default;
 			~INIHandler() = default;

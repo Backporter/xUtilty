@@ -10,21 +10,26 @@
 
 namespace xUtilty
 {
-	void LocalPrint(const char * FMT, ...)
+	void LocalPrint(const char* a_fmt, ...)
 	{
+		//
 		char buffer[1024];
+
+
 		va_list args;
-		va_start(args, FMT);
-		size_t length = SystemWrapper::vsprintf(buffer, FMT, args);
+		va_start(args, a_fmt);
+		size_t length = SystemWrapper::vsprintf(buffer, a_fmt, args);
 		va_end(args);
 	}
 
-	void Notify(const char* MessageFMT, ...)
+	void Notify(const char* a_fmt, ...)
 	{
+		//
 		NotifyBuffer Buffer;
+
 		va_list args;
-		va_start(args, MessageFMT);
-		size_t length = SystemWrapper::vsprintf(Buffer.Message, MessageFMT, args);
+		va_start(args, a_fmt);
+		size_t length = SystemWrapper::vsprintf(Buffer.Message, a_fmt, args);
 		va_end(args);
 
 		Buffer.Type = NotifyType::NotificationRequest;
@@ -48,32 +53,64 @@ namespace xUtilty
 
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
 		svcOutputDebugString(Buffer.Message, length);
+#elif defined(_WIN32) || defined(_WIN64)
+		printf(Buffer.Message);
 #endif
 	}
 
-	void KernelPrintOut(const char* MessageFMT, ...)
+	void KernelPrintOut(const char* a_fmt, ...)
 	{
+		//
 		int64_t s_time;
 		char MessageBuf[1024];
 
 		time(&s_time);
 		auto time = localtime(&s_time);
-		std::strftime(MessageBuf, 1024, "[%m/%d/%Y - %I:%M:%S%p] ", time);
+		strftime(MessageBuf, 1024, "[%m/%d/%Y - %I:%M:%S%p] ", time);
 
 		// stub the size.
 		auto timelen = strlen(MessageBuf);
 
 		va_list args;
-		va_start(args, MessageFMT);
-		size_t length = SystemWrapper::vsprintf(&MessageBuf[timelen], MessageFMT, args);
+		va_start(args, a_fmt);
+		size_t length = SystemWrapper::vsprintf(&MessageBuf[timelen], a_fmt, args);
 		va_end(args);
 
 #if defined (__ORBIS__) || defined(__OPENORBIS__)
 		SystemWrapper::sceKernelDebugOutText(0, MessageBuf);
 		SystemWrapper::sceKernelDebugOutText(0, "\n");
-
 #elif defined(__SWITCH__) || defined(PLATFORM_NX)
 		svcOutputDebugString(MessageBuf, length);
+#elif defined(_WIN32) || defined(_WIN64)
+		printf(MessageBuf);
+#endif
+	}
+
+	void CoredumpPrintOut(const char* a_fmt, ...)
+	{
+		//
+		int64_t s_time;
+		char MessageBuf[1024];
+
+		time(&s_time);
+		auto time = localtime(&s_time);
+		strftime(MessageBuf, 1024, "[%m/%d/%Y - %I:%M:%S%p] ", time);
+
+		// stub the size.
+		auto timelen = strlen(MessageBuf);
+
+		va_list args;
+		va_start(args, a_fmt);
+		size_t length = SystemWrapper::vsprintf(&MessageBuf[timelen], a_fmt, args);
+		va_end(args);
+
+#if defined (__ORBIS__) || defined(__OPENORBIS__)
+		SystemWrapper::sceCoredumpDebugTextOut(MessageBuf, length);
+		SystemWrapper::sceCoredumpDebugTextOut("\n", length);
+#elif defined(__SWITCH__) || defined(PLATFORM_NX)
+		svcOutputDebugString(MessageBuf, length);
+#elif defined(_WIN32) || defined(_WIN64)
+		printf(MessageBuf);
 #endif
 	}
 }

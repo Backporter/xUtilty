@@ -3,43 +3,87 @@
 #include "../include/stl.h"
 #include "../include/MemoryHandler.h"
 
+#if defined(__ORBIS__) || defined(__OPENORBIS__) || defined(__x86_64__) || defined(_M_X64)
 #include "../Third-Party/herumi/xbayk/6.00/xbyak.h"
+#define INCLUDE_TRAPOLINE true
+#elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+#define INCLUDE_TRAPOLINE false
+#endif
 
 #include <stdint.h>
 #include <mutex>
 #include <map>
+#include <utility>
 
+#if INCLUDE_TRAPOLINE
 namespace xUtilty
 {
-	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE, ill improve on this at some point....
+	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE with a few addons and code changes.
 	class Trampoline
 	{
 	public:
 		using deallocator_t = void(void*, size_t, int64_t);
 
-		enum Instance { kLocal, kBranch, kTotal };
-	public:
-		// default impl for deallocating the memory pool.
-		static void default_deallocator(void* a_data, size_t a_size, int64_t a_physicalAddress);
+		enum
+		{ 
+			// Main executable
+			kBranch,
 
+			// Main PRX
+			kLocal,
+
+			// Sub modules(unused)
+			kModule,
+			
+			// 
+			kTotal = 3
+		};
+	public:
 		Trampoline() = default;
 		~Trampoline();
 		
-		// Singleton, kLocal is given to the main app executable, kBranch is unused but is here for hooking modules if needed.
 		static Trampoline& get(int a_instance)
 		{
 			static Trampoline singleton[kTotal];
 			return singleton[a_instance];
 		}
+		
+		// allocate memory from the system for the pool.
+		std::pair<void*, int64_t> allocate_sys(size_t a_size, size_t a_alignment, void* a_pModuleBase);
 
 		// Create a memory pool for the trampoline to use, if a_pModuleBase is NOT a nullptr it's used as a refrence for where it should look for free memory, should it be null it defaults to using the game's base.
-		bool create(size_t a_size = 1024 * 64, size_t a_alignment = 0, deallocator_t* a_freefunc = nullptr, void* a_pModuleBase = nullptr);
+		bool create(size_t a_size = 1024 * 64, size_t a_alignment = 0, void* a_pModuleBase = nullptr);
 
+		// 
+		void Setup(void* a_data, int64_t a_physicalAddress, size_t a_size) { Setup(a_data, a_physicalAddress, a_size, {}); }
+
+		void Setup(void* a_data, int64_t a_physicalAddress, size_t a_size, std::function<void(void*, size_t, int64_t)> a_deallocater)
+		{
+			auto trapoline = static_cast<uint8_t*>(a_data);
+			if (trapoline)
+			{
+				constexpr auto INT3 = static_cast<int>(0xCC);
+				memset(trapoline, INT3, a_size);
+			}
+
+			release();
+
+			m_deallocator = std::move(a_deallocater);
+			m_data = trapoline;
+			m_physicalAddress = a_physicalAddress;
+			m_capacity = a_size;
+			m_size = 0;
+
+			log_usage();
+		}
+		
 		// allocate some memory from the memory pool.
 		void* allocate(size_t a_size);
 		
+#if __clang__ || _WIN64
 		// 
 		void* allocate(Xbyak::CodeGenerator& a_code);
+#endif
 
 		// wrapper for allocate which uses a template. 
 		template <typename T>
@@ -254,20 +298,21 @@ namespace xUtilty
 			//
 			m_PluginMap.clear();
 		}
-	private:
+	public:
 		// storage, names, and the deallocator
-		std::map<uintptr_t, uint8_t*>		m_5branches;
-		std::map<uintptr_t, uint8_t*>		m_6branches;
-		deallocator_t*						m_deallocator { default_deallocator };
+		std::map<uintptr_t, uint8_t*>				m_5branches;
+		std::map<uintptr_t, uint8_t*>				m_6branches;
+		std::function<void(void*, size_t, int64_t)>	m_deallocator;
 
 		// Memory pool data
-		int64_t								m_physicalAddress;	// 
-		uint8_t*							m_data;				// 
-		size_t								m_capacity;			// allocated
-		size_t								m_size;				// used
+		int64_t										m_physicalAddress;			// 
+		uint8_t*									m_data { nullptr };			// 
+		size_t										m_capacity { 0 };			// allocated
+		size_t										m_size { 0 };				// used
 
 		// Plugin Data
-		std::mutex							m_PluginMaplock;
-		std::unordered_map<size_t, size_t>	m_PluginMap;
+		std::mutex									m_PluginMaplock;
+		std::unordered_map<size_t, size_t>			m_PluginMap;
 	};
 }
+#endif

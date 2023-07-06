@@ -6,25 +6,21 @@
 
 namespace std
 {
+#if __cplusplus <= 201402L
 	template <typename _Tp>
 	inline void destroy_at(_Tp* __location)
 	{
 		if constexpr (__cplusplus > 201703L && std::is_array<_Tp>::value)
 		{
 			for (auto& __x : *__location)
+			{
 				destroy_at(std::addressof(__x));
+			}
 		}
 		else
+		{
 			__location->~_Tp();
-	}
-
-	template<typename _Tp, typename... _Args>
-	constexpr auto
-		construct_at(_Tp* __location, _Args&&... __args)
-		noexcept(noexcept(::new((void*)0) _Tp(std::declval<_Args>()...)))
-		-> decltype(::new((void*)0) _Tp(std::declval<_Args>()...))
-	{
-		return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...);
+		}
 	}
 
 	template<class _InIt, class _Diff, class _FwdIt> inline
@@ -45,13 +41,24 @@ namespace std
 		return (_First);
 	}
 
-
 	template<class _FwdIt, class _Size>
 	_FwdIt destroy_n(_FwdIt _First, _Size _Count)
 	{	// destroy by count
 		for (; 0 < _Count; (void)++_First, --_Count)
 			destroy_at(std::addressof(*_First));
+
 		return (_First);
+	}
+#endif
+
+#if __cplusplus < 202002L
+	template<typename _Tp, typename... _Args>
+	constexpr auto
+		construct_at(_Tp* __location, _Args&&... __args)
+		noexcept(noexcept(::new((void*)0) _Tp(std::declval<_Args>()...)))
+		-> decltype(::new((void*)0) _Tp(std::declval<_Args>()...))
+	{
+		return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...);
 	}
 
 #pragma clang diagnostic push
@@ -84,4 +91,5 @@ namespace std
 	{ 
 		return _lerp(a, b, t); 
 	}
+#endif
 }

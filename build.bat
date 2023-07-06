@@ -6,7 +6,7 @@ set build_warnings=-Wno-c++1z-extensions -Wno-nonportable-include-path -Wno-unkn
 rem build flags, c/c++ version, preprocessor defines, etc.
 set build_flags=-fPIC -funwind-tables -frtti -fexceptions -o2 --std=gnu++14 -D__OPENORBIS__=1 -DPLATFORM_ORBIS=1
 
-set libraries=-lc -lkernel -lc++
+set libraries=-lc -lkernel -lc++ -lSceSysmodule -lSceCommonDialog -lSceMsgDialog -lSceErrorDialog -lSceUserService -lSceImeDialog -lSceSaveData
 
 set intdir=ORBIS_Debug
 set targetname=OrbisUtil

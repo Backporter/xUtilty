@@ -5,9 +5,11 @@
 #include <stddef.h>
 #include "Macro.h"
 
+#if __clang__
+
 // if C++ version < c++14, error and write out the version.
 #if __cplusplus < 201402
-PRINT_CPPVERSION(__cplusplus);
+// PRINT_CPPVERSION(__cplusplus);
 #endif
 
 // _t/_v of C++/+=14 types.
@@ -54,6 +56,15 @@ namespace std
 #endif
 
 #if __cplusplus < 201703
+	template< class T, class... Args >
+	inline constexpr bool is_constructible_v = is_constructible<T, Args...>::value;
+
+	template< class T, class... Args >
+	inline constexpr bool is_trivially_constructible_v = is_trivially_constructible<T, Args...>::value;
+
+	template< class T, class... Args >
+	inline constexpr bool is_nothrow_constructible_v = is_nothrow_constructible<T, Args...>::value;
+
 	// _v:
 	template<class _From, class _To>
 	inline constexpr bool is_convertible_v = is_convertible<_From, _To>::value;
@@ -349,3 +360,4 @@ namespace std
 	inline constexpr bool is_not_pointer_v = is_not_pointer<T>::value;
 
 }
+#endif

@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="Third-Party\iwanders\Compile_Time_CRC32\compile_time_crc.hpp" />
+    <ClInclude Include="include\Logger.h" />
+    <ClInclude Include="include\SystemWrapper.h" />
+    <ClInclude Include="include\bitFlags.h" />
+    <ClInclude Include="include\CPU.h" />
+    <ClInclude Include="include\CryptoHandler.h" />
+    <ClInclude Include="include\DialogueManger.h" />
+    <ClInclude Include="include\FileSystem.h" />
+    <ClInclude Include="include\FramerateTracker.h" />
+    <ClInclude Include="include\GPU.h" />
+    <ClInclude Include="include\INIHandler.h" />
+    <ClInclude Include="include\Types.h" />
+    <ClInclude Include="include\type_traits.h" />
+    <ClInclude Include="include\stl.h" />
+    <ClInclude Include="include\Macro.h" />
+    <ClInclude Include="include\MemoryHandler.h" />
+    <ClInclude Include="include\MemoryUsageTracker.h" />
+    <ClInclude Include="include\MessageHandler.h" />
+    <ClInclude Include="include\Mira.h" />
+    <ClInclude Include="include\Mutex.h" />
+    <ClInclude Include="include\OrbisSFOHandler.h" />
+    <ClInclude Include="include\Relocation.h" />
+    <ClInclude Include="include\RelocationManager.h" />
+    <ClInclude Include="include\std.h" />
+    <ClInclude Include="include\Streams\IFIleStream.h" />
+    <ClInclude Include="include\Streams\IMemoryStream.h" />
+    <ClInclude Include="include\Streams\IStream.h" />
+    <ClInclude Include="include\OffsertManger.h" />
+    <ClInclude Include="include\Trampoline.h" />
+    <ClInclude Include="include\Streams\ISocketFileStream.h" />
+    <ClInclude Include="include\PersistentSocketConnection.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\Logger.cpp" />
+    <ClCompile Include="source\SystemWrapper.cpp" />
+    <ClCompile Include="source\CPU.cpp" />
+    <ClCompile Include="source\CryptoHandler.cpp" />
+    <ClCompile Include="source\DialogueManger.cpp" />
+    <ClCompile Include="source\FileSystem.cpp" />
+    <ClCompile Include="source\FramerateTracker.cpp" />
+    <ClCompile Include="source\GPU.cpp" />
+    <ClCompile Include="source\INIHandler.cpp" />
+    <ClCompile Include="source\MemoryHandler.cpp" />
+    <ClCompile Include="source\MemoryUsageTracker.cpp" />
+    <ClCompile Include="source\MessageHandler.cpp" />
+    <ClCompile Include="source\Mira.cpp" />
+    <ClCompile Include="source\Mutex.cpp" />
+    <ClCompile Include="source\OrbisSFOHandler.cpp" />
+    <ClCompile Include="source\RelocationManager.cpp" />
+    <ClCompile Include="include\Streams\IFIleStream.cpp" />
+    <ClCompile Include="include\Streams\IMemoryStream.cpp" />
+    <ClCompile Include="include\Streams\IStream.cpp" />
+    <ClCompile Include="source\OffsertManger.cpp" />
+    <ClCompile Include="source\Trampoline.cpp" />
+    <ClCompile Include="include\Streams\ISocketFileStream.cpp" />
+    <ClCompile Include="source\PersistentSocketConnection.cpp" />
+  </ItemGroup>
+</Project>
