@@ -16,6 +16,7 @@ namespace xUtilty
 		bool INIHandler::Parse()
 		{
 			SetPath(&LogPath, &MiraPath, &DataPath, &AppDataPath);
+		
 			m_path = AppDataPath;
 	
 			if (FileSystem::PathExists(FileSystem::Full, AppDataPath, false))
@@ -58,7 +59,11 @@ namespace xUtilty
 				m_ConsoleToptions.UseExperimentalLogic			= m_reader.GetBoolean("CSEL", "bUseExperimentalLogic", false);
 				m_ConsoleToptions.UseCustomIconURL				= m_reader.GetBoolean("CSEL", "bUseCustomIcon", false);
 				m_ConsoleToptions.Icon							= strdup(m_reader.Get("CSEL", "sIcon", "https://www.akcpetinsurance.com/res/akc/images/icons/home/home_dog.png").c_str());
-	
+				m_ConsoleToptions.GAME_BUILD_MINOR				= m_reader.GetInteger("CSEL", "iOffsetDatabaseMinor", 1);
+				m_ConsoleToptions.GAME_BUILD_MAJOR				= m_reader.GetInteger("CSEL", "iOffsetDatabaseMajor", 5);
+				m_ConsoleToptions.GAME_BUILD_BUILD				= m_reader.GetInteger("CSEL", "iOffsetDatabaseBuild", 23);
+				m_ConsoleToptions.GAME_BUILD_SUB				= m_reader.GetInteger("CSEL", "iOffsetDatabaseSub", 0);
+
 				// Game
 				m_ConsoleToptions.RenderTargetTextureWidth      = m_reader.GetInteger("Game", "iRenderTargetTextureWidth", 1920);
 				m_ConsoleToptions.RenderTargetTextureHeight     = m_reader.GetInteger("Game", "iRenderTargetTextureHeight", 1080);
@@ -86,7 +91,7 @@ namespace xUtilty
 	
 				// Executible
 				m_ConsoleToptions.UseModuleStartAsEntryPoint	= m_reader.GetBoolean("Executable", "bUseModuleStartAsEntryPoint", false);
-	
+
 				// AFR
 				m_ConsoleToptions.UseAFR						= m_reader.GetBoolean("AFR", "UseAFR", false);
 				m_ConsoleToptions.FileSeperator					= m_reader.GetInteger("AFR", "FileSeperator", '\0');
@@ -96,14 +101,11 @@ namespace xUtilty
 				{
 					Notify("Skyrim Mods/Creation Club PSN bypasser is active, I take no responsabilty for anything that occours while this is active.");
 				}
-	
+
 				return true;
 			}
 
 			return false;
-		
-			g_UseExperimentalLogic = m_ConsoleToptions.UseExperimentalLogic;
-			g_UseAFR = m_ConsoleToptions.UseAFR;
 		}
 	}
 }

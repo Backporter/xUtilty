@@ -65,6 +65,10 @@ namespace xUtilty
 
 			// [Executable]
 			bool		UseModuleStartAsEntryPoint{ false };																						// bUseModuleStartAsEntryPoint
+			int32_t		GAME_BUILD_MINOR{ 1 };																										// iOffsetDatabaseMinor
+			int32_t		GAME_BUILD_MAJOR{ 5 };																										// iOffsetDatabaseMajor
+			int32_t		GAME_BUILD_BUILD{ 23 };																										// iOffsetDatabaseBuild
+			int32_t		GAME_BUILD_SUB{ 0 };																										// iOffsetDatabaseSub
 
 			// [AFR]
 			bool		UseAFR;																														// bUseAFR
@@ -74,9 +78,6 @@ namespace xUtilty
 
 		class INIHandler
 		{
-		public:
-			static bool& g_UseExperimentalLogic;
-			static bool& g_UseAFR;
 		public:
 			INIHandler() = default;
 			~INIHandler() = default;
@@ -97,5 +98,23 @@ namespace xUtilty
 			INIReader	m_reader;
 			Settings	m_ConsoleToptions;
 		};
+
+#if __clang__
+		inline static bool& g_Debug = INIHandler::GetSingleton()->GetINIOptions()->IsDebugMode;
+#else
+		static bool& g_Debug = INIHandler::GetSingleton()->GetINIOptions()->IsDebugMode;
+#endif
+
+#if __clang__
+		inline static bool& g_UseExperimentalLogic = INIHandler::GetSingleton()->GetINIOptions()->UseExperimentalLogic;
+#else
+		static bool& g_UseExperimentalLogic = INIHandler::GetSingleton()->GetINIOptions()->UseExperimentalLogic;
+#endif
+		
+#if __clang__
+		inline static bool& g_UseAFR = INIHandler::GetSingleton()->GetINIOptions()->UseAFR;
+#else
+		static bool& g_UseAFR = INIHandler::GetSingleton()->GetINIOptions()->UseAFR;
+#endif
 	}
 }

@@ -1,4 +1,5 @@
 #if defined(__ORBIS__) || defined(__OPENORBIS__) || defined(__x86_64__) || defined(_M_X64)
+#include "../include/INIHandler.h"
 #include "../include/OffsertManger.h"
 
 //
@@ -17,7 +18,6 @@ namespace xUtilty
 	OffsetManger::~OffsetManger()
 	{
 		//
-		PRINT_POS_N;
 	}
 
 	bool OffsetManger::Initialize(int MAJOR, int MINOR, int BUILD, int SUB)
@@ -39,7 +39,11 @@ namespace xUtilty
 		IFileStream filestream;
 
 		// create the path
+#if _DEBUG
 		sprintf(buffer, "/_mira/version-%d-%d-%d-%d.bin", MAJOR, MINOR, BUILD, SUB);
+#else
+		sprintf(buffer, "/app0/data/CSEL/version-%d-%d-%d-%d.bin", MAJOR, MINOR, BUILD, SUB);
+#endif
 
 		// open the file and grow the MemoryStream to fit it
 		if (filestream.Open(buffer, IStream::kFlags::kFlagReadMode))
@@ -200,7 +204,8 @@ namespace xUtilty
 
 	__attribute__((constructor)) inline void INIT()
 	{
-		OffsetManger::GetSingleton().Initialize(GAME_BUILD_MINOR, GAME_BUILD_MAJOR, GAME_BUILD_BUILD, GAME_BUILD_SUB);
+		auto attr = INIHandler::INIHandler::GetSingleton()->GetINIOptions();
+		OffsetManger::GetSingleton().Initialize(attr->GAME_BUILD_MINOR, attr->GAME_BUILD_MAJOR, attr->GAME_BUILD_BUILD, attr->GAME_BUILD_SUB);
 	}
 }
 #endif

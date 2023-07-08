@@ -3,9 +3,12 @@
 #include "../include/stl.h"
 #include "../include/MemoryHandler.h"
 
+// PS4 && x86-64
 #if defined(__ORBIS__) || defined(__OPENORBIS__) || defined(__x86_64__) || defined(_M_X64)
 #include "../Third-Party/herumi/xbayk/6.00/xbyak.h"
 #define INCLUDE_TRAPOLINE true
+
+// x86
 #elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
 #define INCLUDE_TRAPOLINE false
 #endif
@@ -18,7 +21,7 @@
 #if INCLUDE_TRAPOLINE
 namespace xUtilty
 {
-	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE with a few addons and code changes.
+	// based of the SKSE team/ianpatts trampoline class found within SKSE/F4SE.
 	class Trampoline
 	{
 	public:
