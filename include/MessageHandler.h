@@ -107,7 +107,7 @@ namespace xUtilty
 		char unkstr[1024];
 	};
 
-	// self contained vsprinf, if patches are applied this will do the same thing KernelPrintOut does.
+	// self contained vsprinf that'll write to stdout.
 	void LocalPrint(const char* a_fmt, ...);
 
 	// Pushes a Notifcation and writes to the kernel log
