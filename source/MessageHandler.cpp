@@ -20,6 +20,9 @@ namespace xUtilty
 		va_start(args, a_fmt);
 		size_t length = SystemWrapper::vsprintf(buffer, a_fmt, args);
 		va_end(args);
+
+		// push to stdout
+		fwrite(buffer, 1, length, stdout);
 	}
 
 	void Notify(const char* a_fmt, ...)
